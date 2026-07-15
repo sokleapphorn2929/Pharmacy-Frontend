@@ -56,21 +56,39 @@ export default function VerifyCode() {
       .post(
         "https://pharmacy-system-backend-j77b.onrender.com/api/users/verify-otp",
         {
-          email: email,
+          email: location.state?.email,
           code: fullCode,
         },
       )
       .then((rsp) => {
-        alert("Account Verified Successfully!");
-        navigate("/home");
+        // 1. Log the full response to check where your backend puts the token
+        console.log("Full Verification API Response:", rsp.data);
+
+        // 2. Comprehensive check covering common Laravel/API formats
+        const finalToken =
+          rsp.data.token ||
+          rsp.data.data?.token ||
+          rsp.data.access_token ||
+          rsp.data.data; // fallback if data is the token string itself
+
+        if (finalToken && typeof finalToken === "string") {
+          localStorage.setItem("authToken", finalToken);
+          alert("Verification Successful!");
+          navigate("/home");
+        } else {
+          // If a token wasn't found in expected paths, throw an error to catch it below
+          throw new Error(
+            "Verification succeeded, but no token was returned by the server.",
+          );
+        }
       })
-      .catch((error) => {
-        console.error(error);
+      .catch((err) => {
+        console.error("Verification error details:", err);
         const serverErrorMessage =
-          error.response?.data?.message ||
-          error.response?.data?.error ||
+          err.response?.data?.message ||
+          err.message ||
           "Invalid verification code. Please try again.";
-        alert(`Verification Failed: ${serverErrorMessage}`);
+        alert(serverErrorMessage);
       })
       .finally(() => {
         setIsLoading(false);

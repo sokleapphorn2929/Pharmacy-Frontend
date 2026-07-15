@@ -61,7 +61,7 @@ export default function RegisterPage() {
       )
       .then((rsp) => {
         alert("Register Successful");
-        navigate("/register-code", { state: { email: userData.email } });
+        navigate("/verify-code", { state: { email: userData.email } });
       })
       .catch((error) => {
         console.error("Full Error Object:", error);

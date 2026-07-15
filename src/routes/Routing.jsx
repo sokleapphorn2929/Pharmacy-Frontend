@@ -11,7 +11,7 @@ export default function Routing() {
       <Routes>
         <Route index path="/" element={<Login />} />
         <Route path="/register" element={<Register/>}/>
-        <Route path="/register-code" element={<VerifyCode/>}/>
+        <Route path="/verify-code" element={<VerifyCode/>}/>
         <Route path="/home" element={<RootLayout/>}>
           <Route path="" element={<Home/>}/>
         </Route>

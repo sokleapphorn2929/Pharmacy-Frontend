@@ -29,7 +29,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           
           {/* Logo Section */}
-          <div className="flex-shrink-0 flex items-center">
+          <div className="shrink-0 flex items-center">
             <Link to="/" className="text-xl font-black tracking-wider text-[#0f172a] dark:text-white flex items-center gap-1.5">
               <span className="text-blue-500">KH</span> PHARMACY.
             </Link>
