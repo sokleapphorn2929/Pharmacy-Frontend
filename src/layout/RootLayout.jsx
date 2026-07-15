@@ -5,7 +5,7 @@ import Navbar from "./Navbar";
 export default function RootLayout() {
   return (
     <div className="app-container">
-      <Navbar />
+      <Navbar/>
 
       <main className="content">
         <Outlet />
