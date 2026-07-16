@@ -3,16 +3,14 @@ import API from "../Api/api";
 
 export default function Product() {
   const [product, setProduct] = useState([]);
-  const [brands, setBrands] = useState([]); 
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Product Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
-  // 🏷️ Brand Modal States
   const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState(null);
 
@@ -21,11 +19,13 @@ export default function Product() {
       try {
         const [productsRsp, brandsRsp] = await Promise.all([
           API.get("/products"),
-          API.get("https://pharmacy-system-backend-j77b.onrender.com/api/brands")
+          API.get(
+            "https://pharmacy-system-backend-j77b.onrender.com/api/brands",
+          ),
         ]);
-        
+
         setProduct(productsRsp.data.data);
-        setBrands(brandsRsp.data.data || brandsRsp.data); 
+        setBrands(brandsRsp.data.data || brandsRsp.data);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -35,7 +35,6 @@ export default function Product() {
     fetchData();
   }, []);
 
-  // Find brand object helper
   const findBrand = (brandId) => {
     return brands.find((b) => String(b.id) === String(brandId));
   };
@@ -46,10 +45,15 @@ export default function Product() {
     setIsModalOpen(true);
   };
 
-  // Triggered when clicking the Brand text inside the product modal
   const handleOpenBrandModal = (brandId) => {
     const brandData = findBrand(brandId);
-    setSelectedBrand(brandData || { brand_name: "Unknown Brand", brand_location: "N/A", brand_detail: "none" });
+    setSelectedBrand(
+      brandData || {
+        brand_name: "Unknown Brand",
+        brand_location: "N/A",
+        brand_detail: "none",
+      },
+    );
     setIsBrandModalOpen(true);
   };
 
@@ -72,11 +76,17 @@ export default function Product() {
 
       await API.post("/cards", payload);
 
-      alert(`Successfully saved ${quantity}x "${selectedProduct.product_name}" to your cart!`);
+      window.dispatchEvent(new Event("cart-updated"));
+
+      alert(
+        `Successfully saved ${quantity}x "${selectedProduct.product_name}" to your cart!`,
+      );
       setIsModalOpen(false);
     } catch (error) {
       console.error("Cart Error Details:", error);
-      const serverErrorMessage = error.response?.data?.message || "Failed to save item to cart. Please try again.";
+      const serverErrorMessage =
+        error.response?.data?.message ||
+        "Failed to save item to cart. Please try again.";
       alert(serverErrorMessage);
     } finally {
       setSubmitting(false);
@@ -90,14 +100,18 @@ export default function Product() {
           Trending Products
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Explore our top-selling healthcare essentials and wellness formulations.
+          Explore our top-selling healthcare essentials and wellness
+          formulations.
         </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {loading
           ? Array.from({ length: 4 }).map((_, idx) => (
-              <div key={idx} className="animate-pulse bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl p-5 h-80 flex flex-col justify-between">
+              <div
+                key={idx}
+                className="animate-pulse bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl p-5 h-80 flex flex-col justify-between"
+              >
                 <div className="w-full h-40 bg-slate-200 dark:bg-slate-700 rounded-2xl" />
                 <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded-md w-3/4 mt-4" />
                 <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-md w-1/2 mt-2" />
@@ -113,7 +127,10 @@ export default function Product() {
               const parsedPrice = parseFloat(prod.product_price);
 
               return (
-                <div key={prod.id} className="group relative bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl overflow-hidden shadow-[0_4px_25px_-5px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_30px_-10px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+                <div
+                  key={prod.id}
+                  className="group relative bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl overflow-hidden shadow-[0_4px_25px_-5px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_30px_-10px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+                >
                   <div>
                     <div className="w-full h-48 sm:h-52 overflow-hidden bg-slate-50 dark:bg-slate-900 relative">
                       <img
@@ -134,7 +151,9 @@ export default function Product() {
                               -{prod.product_discount}%
                             </span>
                           )}
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${isAvailable ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400"}`}>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${isAvailable ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400"}`}
+                          >
                             {isAvailable ? "In Stock" : "OOS"}
                           </span>
                         </div>
@@ -145,7 +164,9 @@ export default function Product() {
                       </h3>
 
                       <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-2 mt-1 min-h-8">
-                        {prod.product_detail !== "none" ? prod.product_detail : "No secondary descriptions specified."}
+                        {prod.product_detail !== "none"
+                          ? prod.product_detail
+                          : "No secondary descriptions specified."}
                       </p>
                     </div>
                   </div>
@@ -160,8 +181,18 @@ export default function Product() {
                         disabled={!isAvailable}
                         className="p-3 bg-[#0f172a] dark:bg-slate-700 hover:bg-[#1e293b] dark:hover:bg-slate-600 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-white disabled:text-slate-400 rounded-2xl shadow-md transition-all duration-150 disabled:cursor-not-allowed"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 4.5v15m7.5-7.5h-15"
+                          />
                         </svg>
                       </button>
                     </div>
@@ -184,16 +215,33 @@ export default function Product() {
                   ID: {selectedProduct.id}
                 </span>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 border-b border-slate-100 dark:border-slate-700/60 pb-5 mb-5">
               <div className="w-full sm:w-1/3 h-32 rounded-2xl bg-slate-50 dark:bg-slate-900 overflow-hidden relative shrink-0">
-                <img src={selectedProduct.product_pic} alt={selectedProduct.product_name} className="w-full h-full object-cover" />
+                <img
+                  src={selectedProduct.product_pic}
+                  alt={selectedProduct.product_name}
+                  className="w-full h-full object-cover"
+                />
               </div>
 
               <div className="flex-1 flex flex-col justify-between">
@@ -202,25 +250,39 @@ export default function Product() {
                     {selectedProduct.product_name}
                   </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-3">
-                    {selectedProduct.product_detail !== "none" ? selectedProduct.product_detail : "No secondary descriptions specified."}
+                    {selectedProduct.product_detail !== "none"
+                      ? selectedProduct.product_detail
+                      : "No secondary descriptions specified."}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-slate-50 dark:border-slate-700/30 text-[11px]">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block font-medium">Availability Status</span>
-                    <span className={`font-bold capitalize ${selectedProduct.product_status === "available" ? "text-emerald-500" : "text-rose-500"}`}>
-                      {selectedProduct.product_status === "available" ? "In Stock" : "Out of Stock"}
+                    <span className="text-slate-400 dark:text-slate-500 block font-medium">
+                      Availability Status
+                    </span>
+                    <span
+                      className={`font-bold capitalize ${selectedProduct.product_status === "available" ? "text-emerald-500" : "text-rose-500"}`}
+                    >
+                      {selectedProduct.product_status === "available"
+                        ? "In Stock"
+                        : "Out of Stock"}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block font-medium">Manufacturer Brand</span>
+                    <span className="text-slate-400 dark:text-slate-500 block font-medium">
+                      Manufacturer Brand
+                    </span>
                     {/* Changed Link to a clickable button element to launch Brand Modal */}
                     <button
-                      onClick={() => handleOpenBrandModal(selectedProduct.brand_id)}
+                      onClick={() =>
+                        handleOpenBrandModal(selectedProduct.brand_id)
+                      }
                       className="text-blue-500 hover:text-blue-600 dark:hover:text-blue-400 font-bold underline line-clamp-1 text-left uppercase"
                     >
-                      {findBrand(selectedProduct.brand_id)?.brand_name || "View Brand Details"} →
+                      {findBrand(selectedProduct.brand_id)?.brand_name ||
+                        "View Brand Details"}{" "}
+                      →
                     </button>
                   </div>
                 </div>
@@ -229,29 +291,59 @@ export default function Product() {
 
             {/* Quantity Controller */}
             <div className="mb-4 text-center">
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">Select Quantity</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">
+                Select Quantity
+              </span>
               <div className="flex items-center justify-center gap-4">
-                <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-11 h-11 bg-slate-100 dark:bg-slate-700 rounded-xl font-extrabold">-</button>
-                <span className="text-2xl font-black text-slate-900 dark:text-white w-12 text-center">{quantity}</span>
-                <button onClick={() => setQuantity((q) => q + 1)} className="w-11 h-11 bg-slate-100 dark:bg-slate-700 rounded-xl font-extrabold">+</button>
+                <button
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  className="w-11 h-11 bg-slate-100 dark:bg-slate-700 rounded-xl font-extrabold"
+                >
+                  -
+                </button>
+                <span className="text-2xl font-black text-slate-900 dark:text-white w-12 text-center">
+                  {quantity}
+                </span>
+                <button
+                  onClick={() => setQuantity((q) => q + 1)}
+                  className="w-11 h-11 bg-slate-100 dark:bg-slate-700 rounded-xl font-extrabold"
+                >
+                  +
+                </button>
               </div>
             </div>
 
             <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4 mb-6 border border-slate-100 dark:border-slate-800">
               <div className="flex flex-col">
-                <span className="text-xs font-semibold text-slate-400">Unit Price: ${parseFloat(selectedProduct.product_price).toFixed(2)}</span>
-                <span className="text-xs font-bold text-slate-500 mt-0.5">Estimated Total:</span>
+                <span className="text-xs font-semibold text-slate-400">
+                  Unit Price: $
+                  {parseFloat(selectedProduct.product_price).toFixed(2)}
+                </span>
+                <span className="text-xs font-bold text-slate-500 mt-0.5">
+                  Estimated Total:
+                </span>
               </div>
               <span className="text-2xl font-black text-slate-950 dark:text-white">
-                ${(parseFloat(selectedProduct.product_price) * quantity).toFixed(2)}
+                $
+                {(parseFloat(selectedProduct.product_price) * quantity).toFixed(
+                  2,
+                )}
               </span>
             </div>
 
             <div className="flex items-center justify-end gap-3">
-              <button onClick={() => setIsModalOpen(false)} disabled={submitting} className="px-5 py-2.5 bg-slate-100 dark:bg-slate-700 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-200">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                disabled={submitting}
+                className="px-5 py-2.5 bg-slate-100 dark:bg-slate-700 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-200"
+              >
                 Cancel
               </button>
-              <button onClick={handleSaveToCart} disabled={submitting} className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-xl shadow-md">
+              <button
+                onClick={handleSaveToCart}
+                disabled={submitting}
+                className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-xl shadow-md"
+              >
                 {submitting ? "Saving..." : "Confirm"}
               </button>
             </div>
@@ -263,7 +355,6 @@ export default function Product() {
       {isBrandModalOpen && selectedBrand && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-3xl p-6 shadow-2xl relative transform scale-100 transition-all">
-            
             {/* Header Layout */}
             <div className="flex justify-between items-start mb-5">
               <div>
@@ -274,12 +365,22 @@ export default function Product() {
                   {selectedBrand.brand_name}
                 </h3>
               </div>
-              <button 
+              <button
                 onClick={() => setIsBrandModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -287,9 +388,9 @@ export default function Product() {
             {/* Brand Banner/Image Frame */}
             {selectedBrand.brand_pic && (
               <div className="w-full h-44 rounded-2xl bg-slate-100 dark:bg-slate-900 overflow-hidden relative border border-slate-100 dark:border-slate-700/40 mb-4">
-                <img 
-                  src={selectedBrand.brand_pic} 
-                  alt={selectedBrand.brand_name} 
+                <img
+                  src={selectedBrand.brand_pic}
+                  alt={selectedBrand.brand_name}
                   className="w-full h-full object-cover select-none"
                 />
               </div>
@@ -305,14 +406,14 @@ export default function Product() {
                   📍 {selectedBrand.brand_location || "Not specified"}
                 </span>
               </div>
-              
+
               <div>
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider block">
                   Corporate Profile & Summary
                 </span>
                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                  {selectedBrand.brand_detail !== "none" 
-                    ? selectedBrand.brand_detail 
+                  {selectedBrand.brand_detail !== "none"
+                    ? selectedBrand.brand_detail
                     : "No corporate background details specified by this manufacturer."}
                 </p>
               </div>
@@ -327,7 +428,6 @@ export default function Product() {
                 Close Review
               </button>
             </div>
-
           </div>
         </div>
       )}
