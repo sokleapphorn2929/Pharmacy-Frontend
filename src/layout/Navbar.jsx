@@ -13,7 +13,6 @@ export default function Navbar() {
     );
   });
 
-  // 1. Fetch cart items and calculate total quantity
   // 1. Fetch cart items and calculate total quantity safely
   useEffect(() => {
     async function fetchCartCount() {
@@ -36,8 +35,6 @@ export default function Navbar() {
           0,
         );
         
-        // 💡 Check if the component should map the items count length or total qty
-        // If your page headers count distinct product list boxes, use cartItems.length instead.
         setCartCount(totalQty);
       } catch (error) {
         console.error("Failed to fetch cart count:", error);
@@ -78,6 +75,7 @@ export default function Navbar() {
             </Link>
           </div>
 
+          {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center gap-8">
             <Link
               to="/kh/home"
@@ -122,6 +120,27 @@ export default function Navbar() {
                   {cartCount}
                 </span>
               )}
+            </Link>
+
+            {/* ❤️ Added Favorites (Desktop) */}
+            <Link
+              to="/kh/favourite"
+              className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+              Favorites
             </Link>
 
             <Link
@@ -181,6 +200,7 @@ export default function Navbar() {
             </button>
           </div>
 
+          {/* Mobile Right Bar Icons */}
           <div className="flex md:hidden items-center gap-2">
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -257,12 +277,14 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* Mobile Drawer Menu */}
+      {/* 💡 Note: Increased max-h property styling to host the extra option smoothly */}
       <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-60 opacity-100 border-t border-gray-100 dark:border-slate-800" : "max-h-0 opacity-0"}`}
+        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-72 opacity-100 border-t border-gray-100 dark:border-slate-800" : "max-h-0 opacity-0"}`}
       >
         <div className="px-4 pt-2 pb-4 space-y-2 bg-white dark:bg-slate-900 shadow-inner">
           <Link
-            to="/"
+            to="/kh/home"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-500 dark:hover:text-blue-400 transition-all"
           >
@@ -308,6 +330,28 @@ export default function Navbar() {
                 {cartCount}
               </span>
             )}
+          </Link>
+
+          {/* ❤️ Added Favorites (Mobile) */}
+          <Link
+            to="/kh/favourite"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-500 dark:hover:text-blue-400 transition-all"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+            Favorites
           </Link>
 
           <Link

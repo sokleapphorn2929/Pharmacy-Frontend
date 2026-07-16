@@ -5,6 +5,7 @@ import VerifyCode from "../pages/VerifyCode";
 import Home from "../pages/Home";
 import RootLayout from "../layout/RootLayout";
 import Cart from "../pages/Cart";
+import Favourite from "../pages/Favourite";
 
 export default function Routing() {
   return (
@@ -16,6 +17,7 @@ export default function Routing() {
         <Route path="/kh" element={<RootLayout/>}>
           <Route path="home" element={<Home/>}/>
           <Route path="cart" element={<Cart/>}/>
+          <Route path="favourite" element={<Favourite/>}/>
         </Route>
       </Routes>
     </BrowserRouter>

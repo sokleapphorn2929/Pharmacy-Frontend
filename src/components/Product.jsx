@@ -4,6 +4,7 @@ import API from "../Api/api";
 export default function Product() {
   const [product, setProduct] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [favorites, setFavorites] = useState([]); // Now correctly tracks [{ id, product_id }]
   const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,15 +18,35 @@ export default function Product() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [productsRsp, brandsRsp] = await Promise.all([
-          API.get("/products"),
-          API.get(
-            "https://pharmacy-system-backend-j77b.onrender.com/api/brands",
-          ),
-        ]);
+        const token = localStorage.getItem("authToken");
 
-        setProduct(productsRsp.data.data);
-        setBrands(brandsRsp.data.data || brandsRsp.data);
+        // Define requests. Only fetch favorites if the user is authenticated
+        const requests = [
+          API.get("/products"),
+          API.get("https://pharmacy-system-backend-j77b.onrender.com/api/brands"),
+        ];
+
+        if (token) {
+          requests.push(
+            API.get("https://pharmacy-system-backend-j77b.onrender.com/api/favourites")
+          );
+        }
+
+        const responses = await Promise.all(requests);
+
+        setProduct(responses[0].data.data);
+        setBrands(responses[1].data.data || responses[1].data);
+
+        if (token && responses[2]) {
+          const favData = responses[2].data.data || responses[2].data || [];
+          // Keep both favorite ID and product_id for full CRUD capability
+          setFavorites(
+            favData.map((fav) => ({
+              id: String(fav.id),
+              product_id: String(fav.product_id),
+            }))
+          );
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -52,9 +73,62 @@ export default function Product() {
         brand_name: "Unknown Brand",
         brand_location: "N/A",
         brand_detail: "none",
-      },
+      }
     );
     setIsBrandModalOpen(true);
+  };
+
+  const handleToggleFavorite = async (productId) => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      alert("Please login first to manage your favorites.");
+      return;
+    }
+
+    const searchId = String(productId);
+    // Find item matching the product_id inside our object array
+    const existingFav = favorites.find((fav) => fav.product_id === searchId);
+    const isFav = !!existingFav;
+
+    try {
+      if (isFav) {
+        console.log(
+          `Sending DELETE request for favorite ID: ${existingFav.id} with product_id: ${productId}`
+        );
+
+        await API.delete(
+          `https://pharmacy-system-backend-j77b.onrender.com/api/favourites/${existingFav.id}`,
+          {
+            data: {
+              product_id: productId,
+            },
+          }
+        );
+
+        // Remove from local state safely matching product_id
+        setFavorites((prev) => prev.filter((fav) => fav.product_id !== searchId));
+      } else {
+        console.log("Sending POST request to add favorite");
+
+        const response = await API.post(
+          "https://pharmacy-system-backend-j77b.onrender.com/api/favourites",
+          {
+            product_id: productId,
+          }
+        );
+
+        const newFavData = response.data?.data || response.data;
+        const newFavId = newFavData?.id ? String(newFavData.id) : searchId;
+
+        // Add both the new favorite entry ID and product ID to state
+        setFavorites((prev) => [...prev, { id: newFavId, product_id: searchId }]);
+      }
+    } catch (error) {
+      console.error("Favorite Toggle Error:", error);
+      alert(
+        error.response?.data?.message || "Failed to update favorite status."
+      );
+    }
   };
 
   const handleSaveToCart = async () => {
@@ -79,7 +153,7 @@ export default function Product() {
       window.dispatchEvent(new Event("cart-updated"));
 
       alert(
-        `Successfully saved ${quantity}x "${selectedProduct.product_name}" to your cart!`,
+        `Successfully saved ${quantity}x "${selectedProduct.product_name}" to your cart!`
       );
       setIsModalOpen(false);
     } catch (error) {
@@ -100,8 +174,7 @@ export default function Product() {
           Trending Products
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Explore our top-selling healthcare essentials and wellness
-          formulations.
+          Explore our top-selling healthcare essentials and wellness formulations.
         </p>
       </div>
 
@@ -125,6 +198,9 @@ export default function Product() {
               const isAvailable = prod.product_status === "available";
               const hasDiscount = parseFloat(prod.product_discount) > 0;
               const parsedPrice = parseFloat(prod.product_price);
+              
+              // Correctly scan our array of objects using .some()
+              const isFavorited = favorites.some((fav) => fav.product_id === String(prod.id));
 
               return (
                 <div
@@ -138,6 +214,24 @@ export default function Product() {
                         alt={prod.product_name}
                         className={`w-full h-full object-cover select-none transform group-hover:scale-105 transition-transform duration-500 ${!isAvailable ? "opacity-50 grayscale" : ""}`}
                       />
+
+                      {/* ❤️ Favorite Button Overlay */}
+                      <button
+                        onClick={() => handleToggleFavorite(prod.id)}
+                        className="absolute top-3 right-3 p-2.5 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shadow-sm hover:bg-white dark:hover:bg-slate-900 transition-colors duration-200 z-10"
+                      >
+                        <svg
+                          className={`w-5 h-5 transition-colors duration-200 ${isFavorited ? "fill-rose-500 stroke-rose-500" : "stroke-slate-600 dark:stroke-slate-300 fill-none"}`}
+                          viewBox="0 0 24 24"
+                          strokeWidth="2"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+                          />
+                        </svg>
+                      </button>
                     </div>
 
                     <div className="p-5 pb-2">
@@ -226,11 +320,7 @@ export default function Product() {
                   strokeWidth="2"
                   viewBox="0 0 24 24"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
@@ -264,25 +354,18 @@ export default function Product() {
                     <span
                       className={`font-bold capitalize ${selectedProduct.product_status === "available" ? "text-emerald-500" : "text-rose-500"}`}
                     >
-                      {selectedProduct.product_status === "available"
-                        ? "In Stock"
-                        : "Out of Stock"}
+                      {selectedProduct.product_status === "available" ? "In Stock" : "Out of Stock"}
                     </span>
                   </div>
                   <div>
                     <span className="text-slate-400 dark:text-slate-500 block font-medium">
                       Manufacturer Brand
                     </span>
-                    {/* Changed Link to a clickable button element to launch Brand Modal */}
                     <button
-                      onClick={() =>
-                        handleOpenBrandModal(selectedProduct.brand_id)
-                      }
+                      onClick={() => handleOpenBrandModal(selectedProduct.brand_id)}
                       className="text-blue-500 hover:text-blue-600 dark:hover:text-blue-400 font-bold underline line-clamp-1 text-left uppercase"
                     >
-                      {findBrand(selectedProduct.brand_id)?.brand_name ||
-                        "View Brand Details"}{" "}
-                      →
+                      {findBrand(selectedProduct.brand_id)?.brand_name || "View Brand Details"} →
                     </button>
                   </div>
                 </div>
@@ -316,18 +399,14 @@ export default function Product() {
             <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4 mb-6 border border-slate-100 dark:border-slate-800">
               <div className="flex flex-col">
                 <span className="text-xs font-semibold text-slate-400">
-                  Unit Price: $
-                  {parseFloat(selectedProduct.product_price).toFixed(2)}
+                  Unit Price: ${parseFloat(selectedProduct.product_price).toFixed(2)}
                 </span>
                 <span className="text-xs font-bold text-slate-500 mt-0.5">
                   Estimated Total:
                 </span>
               </div>
               <span className="text-2xl font-black text-slate-950 dark:text-white">
-                $
-                {(parseFloat(selectedProduct.product_price) * quantity).toFixed(
-                  2,
-                )}
+                ${(parseFloat(selectedProduct.product_price) * quantity).toFixed(2)}
               </span>
             </div>
 
@@ -351,11 +430,10 @@ export default function Product() {
         </div>
       )}
 
-      {/* 🏷️ Brand Review Modal Overlay (Z-index layer set higher at 50 to stack above product layout context nicely) */}
+      {/* 🏷️ Brand Review Modal Overlay */}
       {isBrandModalOpen && selectedBrand && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-3xl p-6 shadow-2xl relative transform scale-100 transition-all">
-            {/* Header Layout */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
             <div className="flex justify-between items-start mb-5">
               <div>
                 <span className="text-[10px] bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-extrabold tracking-widest uppercase px-2.5 py-1 rounded-md">
@@ -376,16 +454,11 @@ export default function Product() {
                   strokeWidth="2.5"
                   viewBox="0 0 24 24"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            {/* Brand Banner/Image Frame */}
             {selectedBrand.brand_pic && (
               <div className="w-full h-44 rounded-2xl bg-slate-100 dark:bg-slate-900 overflow-hidden relative border border-slate-100 dark:border-slate-700/40 mb-4">
                 <img
@@ -396,7 +469,6 @@ export default function Product() {
               </div>
             )}
 
-            {/* Information Body */}
             <div className="space-y-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl mb-6">
               <div>
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider block">
@@ -419,7 +491,6 @@ export default function Product() {
               </div>
             </div>
 
-            {/* Modal Actions */}
             <div className="flex justify-end">
               <button
                 onClick={() => setIsBrandModalOpen(false)}
