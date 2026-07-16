@@ -74,7 +74,7 @@ export default function VerifyCode() {
         if (finalToken && typeof finalToken === "string") {
           localStorage.setItem("authToken", finalToken);
           alert("Verification Successful!");
-          navigate("/home");
+          navigate("/kh/home");
         } else {
           // If a token wasn't found in expected paths, throw an error to catch it below
           throw new Error(

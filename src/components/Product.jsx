@@ -1,69 +1,82 @@
 import React, { useEffect, useState } from "react";
-// 1. Import your custom API instance instead of raw axios
-// Adjust the import path relative to where your api.js file is located
-import API from "../Api/api"; 
+import API from "../Api/api";
 
 export default function Product() {
   const [product, setProduct] = useState([]);
+  const [brands, setBrands] = useState([]); 
   const [loading, setLoading] = useState(true);
-  
-  // Modal states
+
+  // Product Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
+  // 🏷️ Brand Modal States
+  const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
+  const [selectedBrand, setSelectedBrand] = useState(null);
+
   useEffect(() => {
-    async function getProduct() {
+    async function fetchData() {
       try {
-        // 2. Use API instance with relative endpoint path
-        const rsp = await API.get("/products");
-        setProduct(rsp.data.data);
+        const [productsRsp, brandsRsp] = await Promise.all([
+          API.get("/products"),
+          API.get("https://pharmacy-system-backend-j77b.onrender.com/api/brands")
+        ]);
+        
+        setProduct(productsRsp.data.data);
+        setBrands(brandsRsp.data.data || brandsRsp.data); 
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     }
-    getProduct();
+    fetchData();
   }, []);
+
+  // Find brand object helper
+  const findBrand = (brandId) => {
+    return brands.find((b) => String(b.id) === String(brandId));
+  };
 
   const handleOpenModal = (prod) => {
     setSelectedProduct(prod);
-    setQuantity(1); 
+    setQuantity(1);
     setIsModalOpen(true);
+  };
+
+  // Triggered when clicking the Brand text inside the product modal
+  const handleOpenBrandModal = (brandId) => {
+    const brandData = findBrand(brandId);
+    setSelectedBrand(brandData || { brand_name: "Unknown Brand", brand_location: "N/A", brand_detail: "none" });
+    setIsBrandModalOpen(true);
   };
 
   const handleSaveToCart = async () => {
     if (!selectedProduct) return;
-    
-    // 3. Keep the preemptive local check so we don't send a request if missing entirely
+
     const token = localStorage.getItem("authToken");
     if (!token) {
       alert("Please login first to add items to your cart.");
       setIsModalOpen(false);
       return;
     }
-    
+
     setSubmitting(true);
     try {
       const payload = {
         product_id: selectedProduct.id,
-        qty: quantity
+        qty: quantity,
       };
 
-      // 4. Hit the relative endpoint without passing manual headers config
       await API.post("/cards", payload);
-      
+
       alert(`Successfully saved ${quantity}x "${selectedProduct.product_name}" to your cart!`);
       setIsModalOpen(false);
     } catch (error) {
       console.error("Cart Error Details:", error);
-      
-      const serverErrorMessage = 
-        error.response?.data?.message || 
-        "Failed to save item to cart. Please try again.";
-        
+      const serverErrorMessage = error.response?.data?.message || "Failed to save item to cart. Please try again.";
       alert(serverErrorMessage);
     } finally {
       setSubmitting(false);
@@ -72,7 +85,6 @@ export default function Product() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-12">
-      {/* Header Area */}
       <div className="mb-8">
         <h2 className="font-extrabold text-2xl md:text-3xl text-slate-900 dark:text-white tracking-tight">
           Trending Products
@@ -82,156 +94,237 @@ export default function Product() {
         </p>
       </div>
 
-      {/* Responsive Grid Track */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {loading ? (
-          Array.from({ length: 4 }).map((_, idx) => (
-            <div key={idx} className="animate-pulse bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl p-5 h-80 flex flex-col justify-between">
-              <div className="w-full h-40 bg-slate-200 dark:bg-slate-700 rounded-2xl" />
-              <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded-md w-3/4 mt-4" />
-              <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-md w-1/2 mt-2" />
-              <div className="flex justify-between items-center mt-4">
-                <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded-md w-1/4" />
-                <div className="h-10 w-10 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+        {loading
+          ? Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} className="animate-pulse bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl p-5 h-80 flex flex-col justify-between">
+                <div className="w-full h-40 bg-slate-200 dark:bg-slate-700 rounded-2xl" />
+                <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded-md w-3/4 mt-4" />
+                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-md w-1/2 mt-2" />
+                <div className="flex justify-between items-center mt-4">
+                  <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded-md w-1/4" />
+                  <div className="h-10 w-10 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+                </div>
               </div>
-            </div>
-          ))
-        ) : (
-          product.map((prod) => {
-            const isAvailable = prod.product_status === "available";
-            const hasDiscount = parseFloat(prod.product_discount) > 0;
-            const parsedPrice = parseFloat(prod.product_price);
+            ))
+          : product.map((prod) => {
+              const isAvailable = prod.product_status === "available";
+              const hasDiscount = parseFloat(prod.product_discount) > 0;
+              const parsedPrice = parseFloat(prod.product_price);
 
-            return (
-              <div
-                key={prod.id}
-                className="group relative bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl overflow-hidden shadow-[0_4px_25px_-5px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_30px_-10px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
-              >
-                <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
-                  {!isAvailable && (
-                    <span className="bg-rose-500 text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider shadow-sm">
-                      Out of Stock
-                    </span>
-                  )}
-                  {isAvailable && hasDiscount && (
-                    <span className="bg-amber-500 text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider shadow-sm">
-                      -{prod.product_discount}%
-                    </span>
-                  )}
-                </div>
+              return (
+                <div key={prod.id} className="group relative bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl overflow-hidden shadow-[0_4px_25px_-5px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_30px_-10px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
+                  <div>
+                    <div className="w-full h-48 sm:h-52 overflow-hidden bg-slate-50 dark:bg-slate-900 relative">
+                      <img
+                        src={prod.product_pic}
+                        alt={prod.product_name}
+                        className={`w-full h-full object-cover select-none transform group-hover:scale-105 transition-transform duration-500 ${!isAvailable ? "opacity-50 grayscale" : ""}`}
+                      />
+                    </div>
 
-                <div>
-                  <div className="w-full h-48 sm:h-52 overflow-hidden bg-slate-50 dark:bg-slate-900 relative">
-                    <img
-                      src={prod.product_pic}
-                      alt={prod.product_name}
-                      className={`w-full h-full object-cover select-none transform group-hover:scale-105 transition-transform duration-500 ${
-                        !isAvailable ? "opacity-50 grayscale" : ""
-                      }`}
-                    />
+                    <div className="p-5 pb-2">
+                      <div className="flex items-center justify-between gap-2 text-[10px] font-bold tracking-wider uppercase">
+                        <span className="text-slate-400 dark:text-slate-500">
+                          Expires: {prod.product_expired_date}
+                        </span>
+                        <div className="flex items-center gap-1.5 normal-case">
+                          {hasDiscount && isAvailable && (
+                            <span className="bg-amber-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-md shadow-sm">
+                              -{prod.product_discount}%
+                            </span>
+                          )}
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${isAvailable ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400"}`}>
+                            {isAvailable ? "In Stock" : "OOS"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <h3 className="font-bold text-base text-slate-800 dark:text-slate-100 mt-2 line-clamp-1 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors uppercase">
+                        {prod.product_name}
+                      </h3>
+
+                      <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-2 mt-1 min-h-8">
+                        {prod.product_detail !== "none" ? prod.product_detail : "No secondary descriptions specified."}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="p-5 pb-2">
-                    <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block">
-                      Expires: {prod.product_expired_date}
-                    </span>
-
-                    <h3 className="font-bold text-base text-slate-800 dark:text-slate-100 mt-1 line-clamp-1 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors uppercase">
-                      {prod.product_name}
-                    </h3>
-                    
-                    <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-2 mt-1 min-h-8">
-                      {prod.product_detail !== "none" ? prod.product_detail : "No secondary descriptions specified."}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-5 pt-0 mt-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex flex-col">
+                  <div className="p-5 pt-0 mt-4">
+                    <div className="flex items-center justify-between gap-2">
                       <span className="text-xl font-black text-slate-900 dark:text-white">
                         ${parsedPrice.toFixed(2)}
                       </span>
+                      <button
+                        onClick={() => handleOpenModal(prod)}
+                        disabled={!isAvailable}
+                        className="p-3 bg-[#0f172a] dark:bg-slate-700 hover:bg-[#1e293b] dark:hover:bg-slate-600 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-white disabled:text-slate-400 rounded-2xl shadow-md transition-all duration-150 disabled:cursor-not-allowed"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                      </button>
                     </div>
+                  </div>
+                </div>
+              );
+            })}
+      </div>
 
+      {/* 📦 Product Details Modal Overlay */}
+      {isModalOpen && selectedProduct && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full max-w-lg rounded-3xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                  Product Details
+                </h3>
+                <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase block mt-0.5">
+                  ID: {selectedProduct.id}
+                </span>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 border-b border-slate-100 dark:border-slate-700/60 pb-5 mb-5">
+              <div className="w-full sm:w-1/3 h-32 rounded-2xl bg-slate-50 dark:bg-slate-900 overflow-hidden relative shrink-0">
+                <img src={selectedProduct.product_pic} alt={selectedProduct.product_name} className="w-full h-full object-cover" />
+              </div>
+
+              <div className="flex-1 flex flex-col justify-between">
+                <div>
+                  <h4 className="text-base font-extrabold text-slate-900 dark:text-white uppercase leading-snug">
+                    {selectedProduct.product_name}
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-3">
+                    {selectedProduct.product_detail !== "none" ? selectedProduct.product_detail : "No secondary descriptions specified."}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-slate-50 dark:border-slate-700/30 text-[11px]">
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 block font-medium">Availability Status</span>
+                    <span className={`font-bold capitalize ${selectedProduct.product_status === "available" ? "text-emerald-500" : "text-rose-500"}`}>
+                      {selectedProduct.product_status === "available" ? "In Stock" : "Out of Stock"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 block font-medium">Manufacturer Brand</span>
+                    {/* Changed Link to a clickable button element to launch Brand Modal */}
                     <button
-                      onClick={() => handleOpenModal(prod)}
-                      disabled={!isAvailable}
-                      className="p-3 bg-[#0f172a] dark:bg-slate-700 hover:bg-[#1e293b] dark:hover:bg-slate-600 disabled:bg-slate-100 dark:disabled:bg-slate-800 text-white disabled:text-slate-400 rounded-2xl shadow-md transition-all duration-150 disabled:cursor-not-allowed"
+                      onClick={() => handleOpenBrandModal(selectedProduct.brand_id)}
+                      className="text-blue-500 hover:text-blue-600 dark:hover:text-blue-400 font-bold underline line-clamp-1 text-left uppercase"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                      </svg>
+                      {findBrand(selectedProduct.brand_id)?.brand_name || "View Brand Details"} →
                     </button>
                   </div>
                 </div>
               </div>
-            );
-          })
-        )}
-      </div>
+            </div>
 
-      {/* Quantity Modal Overlay */}
-      {isModalOpen && selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full max-w-md rounded-3xl p-6 shadow-2xl relative animate-scaleIn">
-            
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 uppercase">
-              Select Quantity
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-              How many units of <span className="font-bold text-blue-500">{selectedProduct.product_name}</span> do you want to add?
-            </p>
-
-            <div className="flex items-center justify-center gap-4 mb-8">
-              <button 
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="w-12 h-12 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-extrabold text-slate-800 dark:text-white transition-colors"
-              >
-                -
-              </button>
-              
-              <span className="text-2xl font-black text-slate-900 dark:text-white w-12 text-center select-none">
-                {quantity}
-              </span>
-
-              <button 
-                onClick={() => setQuantity((q) => q + 1)}
-                className="w-12 h-12 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-extrabold text-slate-800 dark:text-white transition-colors"
-              >
-                +
-              </button>
+            {/* Quantity Controller */}
+            <div className="mb-4 text-center">
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">Select Quantity</span>
+              <div className="flex items-center justify-center gap-4">
+                <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="w-11 h-11 bg-slate-100 dark:bg-slate-700 rounded-xl font-extrabold">-</button>
+                <span className="text-2xl font-black text-slate-900 dark:text-white w-12 text-center">{quantity}</span>
+                <button onClick={() => setQuantity((q) => q + 1)} className="w-11 h-11 bg-slate-100 dark:bg-slate-700 rounded-xl font-extrabold">+</button>
+              </div>
             </div>
 
             <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-4 mb-6 border border-slate-100 dark:border-slate-800">
-              <span className="text-sm font-semibold text-slate-500">Estimated Total:</span>
-              <span className="text-xl font-black text-slate-950 dark:text-white">
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-slate-400">Unit Price: ${parseFloat(selectedProduct.product_price).toFixed(2)}</span>
+                <span className="text-xs font-bold text-slate-500 mt-0.5">Estimated Total:</span>
+              </div>
+              <span className="text-2xl font-black text-slate-950 dark:text-white">
                 ${(parseFloat(selectedProduct.product_price) * quantity).toFixed(2)}
               </span>
             </div>
 
             <div className="flex items-center justify-end gap-3">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                disabled={submitting}
-                className="px-5 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-200 transition-colors disabled:opacity-50"
-              >
+              <button onClick={() => setIsModalOpen(false)} disabled={submitting} className="px-5 py-2.5 bg-slate-100 dark:bg-slate-700 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-200">
                 Cancel
               </button>
-              
-              <button
-                onClick={handleSaveToCart}
-                disabled={submitting}
-                className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-xl shadow-md transition-colors flex items-center gap-2 disabled:opacity-50"
+              <button onClick={handleSaveToCart} disabled={submitting} className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-xl shadow-md">
+                {submitting ? "Saving..." : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🏷️ Brand Review Modal Overlay (Z-index layer set higher at 50 to stack above product layout context nicely) */}
+      {isBrandModalOpen && selectedBrand && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-3xl p-6 shadow-2xl relative transform scale-100 transition-all">
+            
+            {/* Header Layout */}
+            <div className="flex justify-between items-start mb-5">
+              <div>
+                <span className="text-[10px] bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-extrabold tracking-widest uppercase px-2.5 py-1 rounded-md">
+                  Brand Profile Review
+                </span>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mt-2">
+                  {selectedBrand.brand_name}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setIsBrandModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
               >
-                {submitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Confirm"
-                )}
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Brand Banner/Image Frame */}
+            {selectedBrand.brand_pic && (
+              <div className="w-full h-44 rounded-2xl bg-slate-100 dark:bg-slate-900 overflow-hidden relative border border-slate-100 dark:border-slate-700/40 mb-4">
+                <img 
+                  src={selectedBrand.brand_pic} 
+                  alt={selectedBrand.brand_name} 
+                  className="w-full h-full object-cover select-none"
+                />
+              </div>
+            )}
+
+            {/* Information Body */}
+            <div className="space-y-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl mb-6">
+              <div>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider block">
+                  Headquarters Location
+                </span>
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-200 capitalize flex items-center gap-1 mt-0.5">
+                  📍 {selectedBrand.brand_location || "Not specified"}
+                </span>
+              </div>
+              
+              <div>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider block">
+                  Corporate Profile & Summary
+                </span>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                  {selectedBrand.brand_detail !== "none" 
+                    ? selectedBrand.brand_detail 
+                    : "No corporate background details specified by this manufacturer."}
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => setIsBrandModalOpen(false)}
+                className="w-full sm:w-auto px-6 py-2.5 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm"
+              >
+                Close Review
               </button>
             </div>
 

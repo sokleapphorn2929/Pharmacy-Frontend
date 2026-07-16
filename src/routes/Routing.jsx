@@ -4,6 +4,7 @@ import Register from "../pages/Register";
 import VerifyCode from "../pages/VerifyCode";
 import Home from "../pages/Home";
 import RootLayout from "../layout/RootLayout";
+import Cart from "../pages/Cart";
 
 export default function Routing() {
   return (
@@ -12,8 +13,9 @@ export default function Routing() {
         <Route index path="/" element={<Login />} />
         <Route path="/register" element={<Register/>}/>
         <Route path="/verify-code" element={<VerifyCode/>}/>
-        <Route path="/home" element={<RootLayout/>}>
-          <Route path="" element={<Home/>}/>
+        <Route path="/kh" element={<RootLayout/>}>
+          <Route path="home" element={<Home/>}/>
+          <Route path="cart" element={<Cart/>}/>
         </Route>
       </Routes>
     </BrowserRouter>

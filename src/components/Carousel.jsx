@@ -48,7 +48,7 @@ export default function Carousel({
   }, [autoSlide, autoSlideInterval, nextSlide]);
 
   return (
-    <div className="w-full mx-auto my-8">
+    <div className="w-full mx-auto my-8 md:px-30 px-3">
       <div className="relative h-75 sm:h-100 md:h-120 w-full group overflow-hidden rounded-4xl border border-gray-100 dark:border-slate-800 shadow-lg bg-slate-100 dark:bg-slate-900">
         <div
           className="flex h-full w-full transition-transform duration-700 ease-out will-change-transform"
