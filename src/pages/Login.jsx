@@ -99,7 +99,7 @@ export default function Login() {
           <img
             src="https://img.magnific.com/premium-photo/3d-doctor-medical-consultation-avatar-online-healthcare-pharmacist-expert-icon-smiling-therapist-cartoon-male-cardiologist-vector-character-stethoscope-shield-young-man-3d-doctor-portrait_1254992-276909.jpg?semt=ais_hybrid&w=740&q=80"
             alt="Character Illustration"
-            className="w-full h-full object-cover rounded-xl select-none pointer-events-none dark:opacity-80 dark:grayscale-[10%]"
+            className="w-full h-full object-cover rounded-xl select-none pointer-events-none dark:opacity-80 dark:grayscale-10"
             loading="lazy"
           />
         </div>

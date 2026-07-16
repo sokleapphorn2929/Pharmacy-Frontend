@@ -239,7 +239,7 @@ export default function Favourite() {
                         </Link>
                       </h4>
 
-                      <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-2 min-h-[2rem] leading-relaxed">
+                      <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-2 min-h-8 leading-relaxed">
                         {prod.product_detail && prod.product_detail !== "none"
                           ? prod.product_detail
                           : "No dynamic description specified for this pharmacy product line."}
