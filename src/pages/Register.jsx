@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function RegisterPage() {
@@ -14,6 +14,41 @@ export default function RegisterPage() {
     password: "",
     profile_pic: null,
   });
+
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return (
+      localStorage.getItem("theme") === "dark" ||
+      (!localStorage.getItem("theme") &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches)
+    );
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+    
+    window.dispatchEvent(new Event("theme-changed"));
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    const handleThemeEvent = () => {
+      const currentTheme = localStorage.getItem("theme") === "dark";
+      setIsDarkMode(currentTheme);
+    };
+
+    window.addEventListener("theme-changed", handleThemeEvent);
+    window.addEventListener("storage", handleThemeEvent);
+
+    return () => {
+      window.removeEventListener("theme-changed", handleThemeEvent);
+      window.removeEventListener("storage", handleThemeEvent);
+    };
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -69,10 +104,10 @@ export default function RegisterPage() {
         const serverErrorMessage =
           error.response?.data?.message ||
           error.response?.data?.error ||
-          JSON.stringify(error.response?.data) ||
+          error.response?.data ||
           error.message;
 
-        alert(serverErrorMessage);
+        alert(typeof serverErrorMessage === "object" ? JSON.stringify(serverErrorMessage) : serverErrorMessage);
       })
       .finally(() => {
         setIsLoading(false);
@@ -80,30 +115,50 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-10 font-sans">
-      <div className="bg-white border border-gray-200 rounded-3xl shadow-xl overflow-hidden max-w-5xl w-full flex flex-col lg:flex-row p-4 lg:p-6 gap-6 lg:gap-12 min-h-150 justify-center">
-        <div className="hidden lg:flex lg:w-1/2 bg-gray-200 rounded-2xl items-center justify-center overflow-hidden relative p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-10 font-sans bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+      <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700/60 rounded-3xl shadow-xl overflow-hidden max-w-5xl w-full flex flex-col lg:flex-row p-4 lg:p-6 gap-6 lg:gap-12 min-h-150 justify-center transition-colors duration-300 relative">
+        
+        <button
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          type="button"
+          className="absolute top-6 right-6 p-2 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-white transition-all outline-none z-10"
+          aria-label="Toggle Theme"
+        >
+          {isDarkMode ? (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          )}
+        </button>
+
+        <div className="hidden lg:flex lg:w-1/2 bg-slate-100 dark:bg-slate-900 rounded-2xl items-center justify-center overflow-hidden relative p-4 transition-colors">
           <img
             src="https://img.magnific.com/premium-photo/3d-doctor-medical-consultation-avatar-online-healthcare-pharmacist-expert-icon-smiling-therapist-cartoon-male-cardiologist-vector-character-stethoscope-shield-young-man-3d-doctor-portrait_1254992-276909.jpg?semt=ais_hybrid&w=740&q=80"
             alt="Character Illustration"
-            className="w-full h-full object-cover rounded-xl"
+            className="w-full h-full object-cover rounded-xl select-none pointer-events-none dark:opacity-80 dark:grayscale-[10%]"
+            loading="lazy"
           />
         </div>
 
         <div className="w-full lg:w-1/2 flex flex-col justify-between py-6 px-2 sm:px-6 md:px-10">
           <div className="hidden lg:block"></div>
 
-          <div className="w-full max-w-md mx-auto">
-            <h1 className="text-3xl md:text-4xl font-bold text-center mb-6 tracking-wide">
+          <div className="w-full max-w-md mx-auto mt-8 lg:mt-0">
+            <h1 className="text-3xl md:text-4xl font-bold text-center mb-6 tracking-wide text-slate-800 dark:text-white">
               Register
             </h1>
 
             <form onSubmit={register} className="space-y-4">
+              
               <div className="flex flex-col items-center justify-center gap-2 mb-2">
-                <label className="text-sm font-semibold text-gray-700">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                   Profile Picture
                 </label>
-                <div className="relative group w-20 h-20 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden hover:border-gray-400 transition-colors bg-gray-50 cursor-pointer">
+                <div className="relative group w-20 h-20 rounded-full border-2 border-dashed border-gray-300 dark:border-slate-600 flex items-center justify-center overflow-hidden hover:border-gray-400 dark:hover:border-slate-500 transition-colors bg-slate-50 dark:bg-slate-700 cursor-pointer">
                   {profilePreview ? (
                     <img
                       src={profilePreview}
@@ -112,21 +167,18 @@ export default function RegisterPage() {
                     />
                   ) : (
                     <svg
-                      className="w-6 h-6 text-gray-400 group-hover:text-gray-600 transition-colors"
+                      className="w-6 h-6 text-gray-400 dark:text-slate-500 group-hover:text-gray-600 dark:group-hover:text-slate-300 transition-colors"
                       fill="none"
                       stroke="currentColor"
+                      strokeWidth="2"
                       viewBox="0 0 24 24"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 4v16m8-8H4"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                   )}
                   <input
                     type="file"
+                    name="profile_pic"
                     accept="image/*"
                     onChange={handleImageChange}
                     disabled={isLoading}
@@ -137,7 +189,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-gray-700 pl-1">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 pl-1">
                     Username
                   </label>
                   <input
@@ -147,13 +199,13 @@ export default function RegisterPage() {
                     onChange={handleInputChange}
                     placeholder="johndoe"
                     disabled={isLoading}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-100 transition-all text-gray-700 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-950/50 transition-all text-slate-800 dark:text-white text-sm disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:text-slate-400"
                     required
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-gray-700 pl-1">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 pl-1">
                     Email
                   </label>
                   <input
@@ -163,13 +215,13 @@ export default function RegisterPage() {
                     onChange={handleInputChange}
                     placeholder="name@example.com"
                     disabled={isLoading}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-100 transition-all text-gray-700 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-950/50 transition-all text-slate-800 dark:text-white text-sm disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:text-slate-400"
                     required
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-gray-700 pl-1">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 pl-1">
                     Phone Number
                   </label>
                   <input
@@ -179,13 +231,13 @@ export default function RegisterPage() {
                     onChange={handleInputChange}
                     placeholder="+1 (555) 000-0000"
                     disabled={isLoading}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-100 transition-all text-gray-700 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-950/50 transition-all text-slate-800 dark:text-white text-sm disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:text-slate-400"
                     required
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-gray-700 pl-1">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 pl-1">
                     Password
                   </label>
                   <input
@@ -195,13 +247,13 @@ export default function RegisterPage() {
                     onChange={handleInputChange}
                     placeholder="••••••••"
                     disabled={isLoading}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-100 transition-all text-gray-700 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-950/50 transition-all text-slate-800 dark:text-white text-sm disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:text-slate-400"
                     required
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <label className="text-sm font-semibold text-gray-700 pl-1">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 pl-1">
                     Address
                   </label>
                   <input
@@ -211,7 +263,7 @@ export default function RegisterPage() {
                     onChange={handleInputChange}
                     placeholder="123 Main St, New York, NY"
                     disabled={isLoading}
-                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 outline-none focus:border-gray-300 focus:ring-2 focus:ring-gray-100 transition-all text-gray-700 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-950/50 transition-all text-slate-800 dark:text-white text-sm disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:text-slate-400"
                     required
                   />
                 </div>
@@ -220,30 +272,11 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors mt-2 text-base tracking-wide flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="w-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all mt-2 text-base tracking-wide flex items-center justify-center gap-2 disabled:bg-slate-400 dark:disabled:bg-slate-700 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <>
-                    <svg
-                      className="animate-spin h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     <span>Registering...</span>
                   </>
                 ) : (
@@ -251,11 +284,11 @@ export default function RegisterPage() {
                 )}
               </button>
 
-              <div className="text-center text-sm text-gray-600 pt-1">
+              <div className="text-center text-sm text-slate-600 dark:text-slate-400 pt-1">
                 Already have an account?{" "}
                 <Link
                   to="/"
-                  className={`text-blue-500 hover:underline ${
+                  className={`text-blue-500 dark:text-blue-400 hover:underline font-medium ${
                     isLoading ? "pointer-events-none opacity-50" : ""
                   }`}
                 >
@@ -266,10 +299,10 @@ export default function RegisterPage() {
           </div>
 
           <div className="mt-8 flex justify-center lg:justify-end">
-            <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm border border-gray-100 text-xs text-gray-800 font-bold">
+            <div className="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-900 px-4 py-2 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800/80 text-xs text-slate-800 dark:text-slate-300 font-bold transition-colors">
               <span>presented by</span>
               <div className="flex items-center gap-0.5">
-                <span className="text-[#3b82f6] font-black italic text-sm">
+                <span className="text-blue-500 dark:text-blue-400 font-black italic text-sm">
                   SOKLEAP
                 </span>
               </div>

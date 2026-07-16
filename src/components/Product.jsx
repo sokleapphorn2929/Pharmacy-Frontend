@@ -4,7 +4,7 @@ import API from "../Api/api";
 export default function Product() {
   const [product, setProduct] = useState([]);
   const [brands, setBrands] = useState([]);
-  const [favorites, setFavorites] = useState([]); // Now correctly tracks [{ id, product_id }]
+  const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,7 +20,6 @@ export default function Product() {
       try {
         const token = localStorage.getItem("authToken");
 
-        // Define requests. Only fetch favorites if the user is authenticated
         const requests = [
           API.get("/products"),
           API.get("https://pharmacy-system-backend-j77b.onrender.com/api/brands"),
@@ -39,7 +38,6 @@ export default function Product() {
 
         if (token && responses[2]) {
           const favData = responses[2].data.data || responses[2].data || [];
-          // Keep both favorite ID and product_id for full CRUD capability
           setFavorites(
             favData.map((fav) => ({
               id: String(fav.id),
@@ -86,7 +84,6 @@ export default function Product() {
     }
 
     const searchId = String(productId);
-    // Find item matching the product_id inside our object array
     const existingFav = favorites.find((fav) => fav.product_id === searchId);
     const isFav = !!existingFav;
 
@@ -105,7 +102,6 @@ export default function Product() {
           }
         );
 
-        // Remove from local state safely matching product_id
         setFavorites((prev) => prev.filter((fav) => fav.product_id !== searchId));
       } else {
         console.log("Sending POST request to add favorite");
@@ -120,7 +116,6 @@ export default function Product() {
         const newFavData = response.data?.data || response.data;
         const newFavId = newFavData?.id ? String(newFavData.id) : searchId;
 
-        // Add both the new favorite entry ID and product ID to state
         setFavorites((prev) => [...prev, { id: newFavId, product_id: searchId }]);
       }
     } catch (error) {
@@ -199,7 +194,6 @@ export default function Product() {
               const hasDiscount = parseFloat(prod.product_discount) > 0;
               const parsedPrice = parseFloat(prod.product_price);
               
-              // Correctly scan our array of objects using .some()
               const isFavorited = favorites.some((fav) => fav.product_id === String(prod.id));
 
               return (
@@ -215,7 +209,6 @@ export default function Product() {
                         className={`w-full h-full object-cover select-none transform group-hover:scale-105 transition-transform duration-500 ${!isAvailable ? "opacity-50 grayscale" : ""}`}
                       />
 
-                      {/* ❤️ Favorite Button Overlay */}
                       <button
                         onClick={() => handleToggleFavorite(prod.id)}
                         className="absolute top-3 right-3 p-2.5 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shadow-sm hover:bg-white dark:hover:bg-slate-900 transition-colors duration-200 z-10"
@@ -296,7 +289,6 @@ export default function Product() {
             })}
       </div>
 
-      {/* 📦 Product Details Modal Overlay */}
       {isModalOpen && selectedProduct && (
         <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full max-w-lg rounded-3xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -372,7 +364,6 @@ export default function Product() {
               </div>
             </div>
 
-            {/* Quantity Controller */}
             <div className="mb-4 text-center">
               <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-2">
                 Select Quantity
@@ -430,7 +421,6 @@ export default function Product() {
         </div>
       )}
 
-      {/* 🏷️ Brand Review Modal Overlay */}
       {isBrandModalOpen && selectedBrand && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-3xl p-6 shadow-2xl relative">

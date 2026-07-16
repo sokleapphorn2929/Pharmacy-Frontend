@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -11,6 +11,39 @@ export default function VerifyCode() {
   const [code, setCode] = useState(new Array(6).fill(""));
   const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef([]);
+
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return (
+      localStorage.getItem("theme") === "dark" ||
+      (!localStorage.getItem("theme") &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches)
+    );
+  });
+
+  useEffect(() => {
+    const handleThemeEvent = () => {
+      const currentTheme = localStorage.getItem("theme") === "dark";
+      setIsDarkMode(currentTheme);
+    };
+
+    window.addEventListener("theme-changed", handleThemeEvent);
+    window.addEventListener("storage", handleThemeEvent);
+
+    return () => {
+      window.removeEventListener("theme-changed", handleThemeEvent);
+      window.removeEventListener("storage", handleThemeEvent);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDarkMode]);
 
   const handleChange = (element, index) => {
     if (isNaN(element.value)) return false;
@@ -61,22 +94,19 @@ export default function VerifyCode() {
         },
       )
       .then((rsp) => {
-        // 1. Log the full response to check where your backend puts the token
         console.log("Full Verification API Response:", rsp.data);
 
-        // 2. Comprehensive check covering common Laravel/API formats
         const finalToken =
           rsp.data.token ||
           rsp.data.data?.token ||
           rsp.data.access_token ||
-          rsp.data.data; // fallback if data is the token string itself
+          rsp.data.data;
 
         if (finalToken && typeof finalToken === "string") {
           localStorage.setItem("authToken", finalToken);
           alert("Verification Successful!");
           navigate("/kh/home");
         } else {
-          // If a token wasn't found in expected paths, throw an error to catch it below
           throw new Error(
             "Verification succeeded, but no token was returned by the server.",
           );
@@ -96,16 +126,16 @@ export default function VerifyCode() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
-      <div className="bg-white rounded-4xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.08)] border border-gray-100 max-w-lg w-full p-10 md:p-12 text-center">
-        <h1 className="text-3xl font-extrabold text-[#0f172a] mb-2 tracking-wide">
+    <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+      <div className="bg-white dark:bg-slate-800 rounded-4xl shadow-[0_15px_40px_-15px_rgba(0,0,0,0.08)] border border-gray-100 dark:border-slate-700/50 max-w-lg w-full p-10 md:p-12 text-center transition-colors duration-300">
+        <h1 className="text-3xl font-extrabold text-[#0f172a] dark:text-white mb-2 tracking-wide">
           Verification Code
         </h1>
 
-        <p className="text-sm text-slate-400 font-medium mb-10 max-w-sm mx-auto leading-relaxed">
+        <p className="text-sm text-slate-400 dark:text-slate-400 font-medium mb-10 max-w-sm mx-auto leading-relaxed">
           We sent a 6-digit code to your device.
           {email && (
-            <span className="block text-slate-500 font-semibold mt-1">
+            <span className="block text-slate-500 dark:text-slate-300 font-semibold mt-1">
               {email}
             </span>
           )}
@@ -113,7 +143,7 @@ export default function VerifyCode() {
 
         <form onSubmit={handleVerify} className="space-y-10">
           <div
-            className="flex justify-center gap-3 md:gap-4"
+            className="flex justify-center gap-2 sm:gap-3 md:gap-4"
             onPaste={handlePaste}
           >
             {code.map((data, index) => (
@@ -126,7 +156,7 @@ export default function VerifyCode() {
                 onChange={(e) => handleChange(e.target, index)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
                 disabled={isLoading}
-                className="w-12 h-14 md:w-14 md:h-16 text-center text-2xl font-bold text-slate-800 bg-[#f8fafc] border-2 border-[#e2e8f0] rounded-2xl outline-none focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/50 transition-all duration-150 disabled:opacity-60"
+                className="w-10 h-12 sm:w-12 sm:h-14 md:w-14 md:h-16 text-center text-2xl font-bold text-slate-800 dark:text-white bg-[#f8fafc] dark:bg-slate-700 border-2 border-[#e2e8f0] dark:border-slate-600 rounded-2xl outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-950/50 transition-all duration-150 disabled:opacity-60"
               />
             ))}
           </div>
@@ -134,29 +164,11 @@ export default function VerifyCode() {
           <button
             type="submit"
             disabled={isLoading || code.some((digit) => digit === "")}
-            className="w-full bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all text-base tracking-wide flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed"
+            className="w-full bg-[#0f172a] dark:bg-blue-600 hover:bg-[#1e293b] dark:hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all text-base tracking-wide flex items-center justify-center gap-2 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:shadow-none disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
-                <svg
-                  className="animate-spin h-5 w-5 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 <span>Verifying...</span>
               </>
             ) : (
@@ -165,18 +177,18 @@ export default function VerifyCode() {
           </button>
         </form>
 
-        <div className="mt-8 text-sm">
+        <div className="mt-8 text-sm flex justify-center items-center gap-6">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="text-slate-400 hover:text-slate-600 transition-colors mr-6"
+            className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
-            ← Back
+            &larr; Back
           </button>
           <button
             type="button"
             onClick={() => alert("Code resent!")}
-            className="text-blue-500 hover:text-blue-600 font-semibold hover:underline"
+            className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 font-semibold hover:underline"
           >
             Resend Code
           </button>

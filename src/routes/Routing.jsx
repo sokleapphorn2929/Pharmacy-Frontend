@@ -17,7 +17,7 @@ export default function Routing() {
         <Route path="/kh" element={<RootLayout/>}>
           <Route path="home" element={<Home/>}/>
           <Route path="cart" element={<Cart/>}/>
-          <Route path="favourite" element={<Favourite/>}/>
+          <Route path="favourites" element={<Favourite/>}/>
         </Route>
       </Routes>
     </BrowserRouter>

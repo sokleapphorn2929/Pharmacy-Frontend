@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 export default function Category() {
   const [category, setCategory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAll, setShowAll] = useState(false); // Controls the dropdown view toggle
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     axios
@@ -19,12 +19,10 @@ export default function Category() {
       });
   }, []);
 
-  // Limit standard display track to 4 items unless showAll toggle is true
   const displayedCategories = showAll ? category : category.slice(0, 4);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-12">
-      {/* Header Area */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
           <h1 className="font-extrabold text-2xl md:text-3xl text-slate-900 dark:text-white tracking-tight">
@@ -35,7 +33,6 @@ export default function Category() {
           </p>
         </div>
 
-        {/* View Toggle Button */}
         {!loading && category.length > 4 && (
           <button
             onClick={() => setShowAll(!showAll)}
@@ -59,10 +56,9 @@ export default function Category() {
         )}
       </div>
 
-      {/* Grid Component Container */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 transition-all duration-500">
         {loading
-          ? // Skeleton loader track matching card styling dimensions
+          ? 
             Array.from({ length: 4 }).map((_, idx) => (
               <div
                 key={idx}
@@ -73,13 +69,12 @@ export default function Category() {
                 <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-md w-1/2 mx-auto" />
               </div>
             ))
-          : // Render items based on the current dropdown slice allocation
+          : 
             displayedCategories.map((item) => (
               <div
                 key={item.id}
                 className="group cursor-pointer bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl p-4 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] hover:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300"
               >
-                {/* Image Wrapper Element */}
                 <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden mb-4 shadow-sm border border-slate-100 dark:border-slate-700 transform group-hover:scale-105 transition-transform duration-300">
                   <img
                     src={item.category_pic}
@@ -88,7 +83,6 @@ export default function Category() {
                   />
                 </div>
 
-                {/* Title & Metadata */}
                 <h3 className="font-bold text-sm md:text-base text-slate-800 dark:text-slate-200 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
                   {item.category_name}
                 </h3>

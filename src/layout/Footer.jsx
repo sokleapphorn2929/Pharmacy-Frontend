@@ -8,10 +8,8 @@ export default function Footer() {
     <footer className="w-full bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         
-        {/* Upper Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           
-          {/* Brand Column */}
           <div className="flex flex-col gap-3">
             <Link
               to="/"
@@ -24,7 +22,6 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Navigation Links Column */}
           <div>
             <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
               Explore
@@ -48,7 +45,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Legal / Policies Column */}
           <div>
             <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
               Legal
@@ -72,7 +68,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact / Support Column */}
           <div>
             <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
               Contact Support
@@ -89,7 +84,6 @@ export default function Footer() {
 
         </div>
 
-        {/* Lower Divider Line & Copyright Context */}
         <div className="pt-8 border-t border-gray-100 dark:border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs font-medium text-slate-400 dark:text-slate-500 tracking-wide text-center sm:text-left capitalize">
             &copy; {currentYear} Copyright by Sokleap. All rights reserved.

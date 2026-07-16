@@ -79,7 +79,6 @@ export default function Carousel({
           ))}
         </div>
 
-        {/* Left Arrow Button */}
         <button
           onClick={prevSlide}
           className="hidden group-hover:block absolute top-1/2 -translate-y-1/2 left-5 rounded-xl p-3 bg-white/30 hover:bg-white/50 dark:bg-slate-900/30 dark:hover:bg-slate-900/50 backdrop-blur-md text-white transition-all duration-200 outline-none"
@@ -99,7 +98,6 @@ export default function Carousel({
           </svg>
         </button>
 
-        {/* Right Arrow Button */}
         <button
           onClick={nextSlide}
           className="hidden group-hover:block absolute top-1/2 -translate-y-1/2 right-5 rounded-xl p-3 bg-white/30 hover:bg-white/50 dark:bg-slate-900/30 dark:hover:bg-slate-900/50 backdrop-blur-md text-white transition-all duration-200 outline-none"
@@ -119,7 +117,6 @@ export default function Carousel({
           </svg>
         </button>
 
-        {/* Bottom Navigation Dots Indicators */}
         <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/20 dark:bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm">
           {slides.map((_, slideIndex) => (
             <button

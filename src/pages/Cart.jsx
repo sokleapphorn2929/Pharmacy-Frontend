@@ -38,23 +38,20 @@ export default function Cart() {
     amount,
   ) => {
     const newQty = currentQty + amount;
-    if (newQty < 1) return; // Keeps items above 0
+    if (newQty < 1) return;
 
     setUpdatingId(cartId);
     try {
-      // Hit the specific card ID endpoint to update DB
       await API.put(`/cards/${cartId}`, {
         qty: newQty,
       });
 
-      // 1. Directly update local Cart view state
       setCartItems((prevItems) =>
         prevItems.map((item) =>
           item.id === cartId ? { ...item, qty: newQty } : item,
         ),
       );
 
-      // 2. ⚡ FIRE CUSTOM EVENT: Immediately updates the Navbar count badge!
       window.dispatchEvent(new Event("cart-updated"));
     } catch (error) {
       console.error("Failed to update cart quantity:", error);
@@ -75,12 +72,10 @@ export default function Cart() {
     try {
       await API.delete(`/cards/${cartId}`);
 
-      // 1. Remove from local Cart view state
       setCartItems((prevItems) =>
         prevItems.filter((item) => item.id !== cartId),
       );
 
-      // 2. ⚡ FIRE CUSTOM EVENT: Decreases navbar badge instantly on item deletion
       window.dispatchEvent(new Event("cart-updated"));
     } catch (error) {
       console.error("Error removing item:", error);
@@ -114,10 +109,8 @@ export default function Cart() {
   }
 
   return (
-    // ✅ Added full width background colors to cleanly reflect light/dark states
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white transition-colors duration-300 py-12 pt-20 pb-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Page Header */}
         <div className="mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5">
           <h2 className="font-extrabold text-2xl md:text-3xl text-slate-900 dark:text-white tracking-tight">
             Shopping Cart ({totalItems} items)
@@ -147,7 +140,6 @@ export default function Cart() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            {/* Items List Column */}
             <div className="lg:col-span-2 space-y-4">
               {cartItems.map((item) => {
                 const productInfo = getProductDetails(item.product_id);
@@ -204,7 +196,6 @@ export default function Cart() {
                       </div>
 
                       <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-50 dark:border-slate-700/30">
-                        {/* Plus/Minus Counters */}
                         <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-900/40 px-2.5 py-1.5 rounded-xl border border-slate-100 dark:border-slate-800">
                           <button
                             disabled={updatingId === item.id || item.qty <= 1}
@@ -256,7 +247,6 @@ export default function Cart() {
               })}
             </div>
 
-            {/* Order Summary Sidebar */}
             <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl p-6 shadow-xl relative">
               <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider mb-4">
                 Order Summary

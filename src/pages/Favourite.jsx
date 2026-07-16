@@ -7,13 +7,11 @@ const FAVOURITES_URL = "https://pharmacy-system-backend-j77b.onrender.com/api/fa
 export default function Favourite() {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [cartLoading, setCartLoading] = useState({}); // Tracks adding-to-cart states per item
+  const [cartLoading, setCartLoading] = useState({});
   
-  // Directly evaluate auth status on render to prevent flash states
   const isLoggedIn = !!localStorage.getItem("authToken");
 
   useEffect(() => {
-    // Immediate early return if user isn't authenticated
     if (!isLoggedIn) {
       setLoading(false);
       return;
@@ -23,7 +21,6 @@ export default function Favourite() {
       try {
         const token = localStorage.getItem("authToken");
 
-        // Pass the headers directly into the GET configuration object
         const response = await API.get(FAVOURITES_URL, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -31,7 +28,6 @@ export default function Favourite() {
           },
         });
         
-        // Handle nested resource structure gracefully
         const favData = response.data?.data || response.data || [];
         setFavorites(Array.isArray(favData) ? favData : []);
       } catch (error) {
@@ -54,7 +50,6 @@ export default function Favourite() {
         },
       });
 
-      // Filter out deleted entry from state instantly
       setFavorites((prev) => prev.filter((fav) => (fav.id || fav._id) !== favoriteId));
     } catch (error) {
       console.error("Failed to remove favorite item:", error);
@@ -70,7 +65,6 @@ export default function Favourite() {
     try {
       const token = localStorage.getItem("authToken");
       
-      // Axios POST to card/cart endpoint
       await API.post(
         "/cards",
         {
@@ -84,7 +78,6 @@ export default function Favourite() {
         }
       );
 
-      // Fire global storage/cart event so Navbar updates counts immediately
       window.dispatchEvent(new Event("cart-updated"));
       alert(`${product.product_name || "Product"} added to cart!`);
     } catch (error) {
@@ -95,7 +88,6 @@ export default function Favourite() {
     }
   };
 
-  // 1. Access Denied Guard Clause
   if (!isLoggedIn) {
     return (
       <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white flex flex-col justify-center items-center px-4">
@@ -114,7 +106,6 @@ export default function Favourite() {
     );
   }
 
-  // 2. Loading Spinner Guard Clause
   if (loading) {
     return (
       <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white flex flex-col justify-center items-center">
@@ -126,12 +117,10 @@ export default function Favourite() {
     );
   }
 
-  // 3. Main Data View Render Loop
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white transition-colors duration-300 py-12 pt-20 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Page Header */}
         <div className="mb-8 border-b border-slate-200 dark:border-slate-800/80 pb-5">
           <h2 className="font-extrabold text-2xl md:text-3xl text-slate-900 dark:text-white tracking-tight">
             My Saved Items ({favorites.length})
@@ -142,7 +131,6 @@ export default function Favourite() {
         </div>
 
         {favorites.length === 0 ? (
-          /* Empty State Display */
           <div className="text-center py-16 bg-white dark:bg-slate-800 border border-dashed border-slate-200 dark:border-slate-700/60 rounded-3xl p-8 max-w-lg mx-auto shadow-sm">
             <div className="text-4xl mb-4">❤️</div>
             <h3 className="text-lg font-bold text-slate-800 dark:text-white uppercase tracking-wide">
@@ -159,14 +147,12 @@ export default function Favourite() {
             </Link>
           </div>
         ) : (
-          /* Dynamic Data Product Grid matching standard product styles */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {favorites.map((fav) => {
               const prod = fav.products;
               const favId = fav.id || fav._id;
               const prodId = prod?._id || prod?.id;
 
-              // Diagnostic error fallback placeholder
               if (!prod) {
                 return (
                   <div key={favId || Math.random()} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-rose-200 dark:border-rose-900/40 text-center flex flex-col justify-center items-center shadow-sm">
@@ -187,7 +173,6 @@ export default function Favourite() {
               const hasDiscount = discountValue > 0;
               const originalPrice = parseFloat(prod.product_price || 0);
               
-              // Calculate discounted structural price if applicable
               const finalPrice = hasDiscount 
                 ? originalPrice - (originalPrice * discountValue) / 100 
                 : originalPrice;
@@ -197,7 +182,6 @@ export default function Favourite() {
                   key={favId}
                   className="group relative bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between"
                 >
-                  {/* Image/Media Frame Wrapper */}
                   <div className="w-full h-48 overflow-hidden bg-slate-50 dark:bg-slate-900 relative border-b border-gray-100 dark:border-slate-800">
                     <Link to={`/kh/product/${prodId || ""}`} className="block w-full h-full">
                       <img
@@ -210,14 +194,12 @@ export default function Favourite() {
                       />
                     </Link>
 
-                    {/* Top Badges (Discount Label Left) */}
                     {hasDiscount && isAvailable && (
                       <span className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm z-10">
                         -{prod.product_discount}% OFF
                       </span>
                     )}
 
-                    {/* Un-favorite Active Button Action (Right Side Overlay) */}
                     <button
                       onClick={() => handleRemoveFavorite(favId)}
                       className="absolute top-3 right-3 p-2 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm shadow-sm hover:bg-rose-50 dark:hover:bg-rose-950/40 group/btn transition-colors duration-150 z-10"
@@ -236,7 +218,6 @@ export default function Favourite() {
                       </svg>
                     </button>
 
-                    {/* Out of Stock Indicator Veil */}
                     {!isAvailable && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
                         <span className="bg-slate-900/80 text-white font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider">
@@ -246,22 +227,18 @@ export default function Favourite() {
                     )}
                   </div>
 
-                  {/* Core Content Segment details */}
                   <div className="p-4 flex-1 flex flex-col justify-between">
                     <div>
-                      {/* Subtitle Metadata Category row */}
                       <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1 flex items-center justify-between">
                         <span>Exp: {prod.product_expired_date || "N/A"}</span>
                       </div>
 
-                      {/* Main Product Title Heading Link */}
                       <h4 className="font-bold text-base text-slate-800 dark:text-white line-clamp-1 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors mb-1">
                         <Link to={`/kh/product/${prodId || ""}`}>
                           {prod.product_name}
                         </Link>
                       </h4>
 
-                      {/* Summary Descriptions layout */}
                       <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-2 min-h-[2rem] leading-relaxed">
                         {prod.product_detail && prod.product_detail !== "none"
                           ? prod.product_detail
@@ -269,7 +246,6 @@ export default function Favourite() {
                       </p>
                     </div>
 
-                    {/* Operational Purchase Actions and Pricing layout footer */}
                     <div className="mt-4 pt-3 border-t border-gray-50 dark:border-slate-700/40">
                       <div className="flex items-baseline gap-2 mb-3">
                         <span className="font-black text-lg text-slate-900 dark:text-white">
@@ -282,7 +258,6 @@ export default function Favourite() {
                         )}
                       </div>
 
-                      {/* Action Button: Add to Cart */}
                       <button
                         onClick={() => handleAddToCart(prod)}
                         disabled={!isAvailable || cartLoading[prodId]}
