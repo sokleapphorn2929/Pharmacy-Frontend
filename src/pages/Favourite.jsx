@@ -9,6 +9,21 @@ export default function Favourite() {
   const [loading, setLoading] = useState(true);
   const [cartLoading, setCartLoading] = useState({});
   
+  const [statusModal, setStatusModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
+
+  const showStatus = (title, message, type = "success") => {
+    setStatusModal({ isOpen: true, title, message, type });
+  };
+
+  const closeStatusModal = () => {
+    setStatusModal((prev) => ({ ...prev, isOpen: false }));
+  };
+  
   const isLoggedIn = !!localStorage.getItem("authToken");
 
   useEffect(() => {
@@ -51,9 +66,11 @@ export default function Favourite() {
       });
 
       setFavorites((prev) => prev.filter((fav) => (fav.id || fav._id) !== favoriteId));
+      showStatus("Removed from Wishlist", "Item was successfully removed from your saved items.", "success");
     } catch (error) {
       console.error("Failed to remove favorite item:", error);
-      alert(error.response?.data?.message || "Could not remove item from favorites.");
+      const errMsg = error.response?.data?.message || "Could not remove item from favorites.";
+      showStatus("Error", errMsg, "error");
     }
   };
 
@@ -79,10 +96,11 @@ export default function Favourite() {
       );
 
       window.dispatchEvent(new Event("cart-updated"));
-      alert(`${product.product_name || "Product"} added to cart!`);
+      showStatus("Added to Cart", `Successfully saved 1x "${product.product_name || "Product"}" to your cart!`, "success");
     } catch (error) {
       console.error("Failed to add item to cart:", error);
-      alert(error.response?.data?.message || "Failed to add item to cart.");
+      const errMsg = error.response?.data?.message || "Failed to add item to cart.";
+      showStatus("Cart Error", errMsg, "error");
     } finally {
       setCartLoading((prev) => ({ ...prev, [prodId]: false }));
     }
@@ -143,7 +161,7 @@ export default function Favourite() {
               to="/kh/home"
               className="inline-flex items-center justify-center px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-xl shadow-md transition-colors"
             >
-              ← Browse Marketplace
+              &larr; Browse Marketplace
             </Link>
           </div>
         ) : (
@@ -155,7 +173,7 @@ export default function Favourite() {
 
               if (!prod) {
                 return (
-                  <div key={favId || Math.random()} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-rose-200 dark:border-rose-900/40 text-center flex flex-col justify-center items-center shadow-sm">
+                  <div key={favId || Math.random()} className="bg-white dark:bg-slate-800 border border-rose-100 dark:border-rose-900/30 p-5 rounded-2xl text-center flex flex-col justify-center items-center shadow-sm">
                     <p className="text-xs text-rose-500 font-bold">⚠️ Product Data Missing</p>
                     <p className="text-[10px] text-slate-400 mt-1">Ref ID: {favId || 'N/A'}</p>
                     <button 
@@ -180,7 +198,7 @@ export default function Favourite() {
               return (
                 <div
                   key={favId}
-                  className="group relative bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+                  className="group relative bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between animate-fadeIn"
                 >
                   <div className="w-full h-48 overflow-hidden bg-slate-50 dark:bg-slate-900 relative border-b border-gray-100 dark:border-slate-800">
                     <Link to={`/kh/product/${prodId || ""}`} className="block w-full h-full">
@@ -233,7 +251,7 @@ export default function Favourite() {
                         <span>Exp: {prod.product_expired_date || "N/A"}</span>
                       </div>
 
-                      <h4 className="font-bold text-base text-slate-800 dark:text-white line-clamp-1 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors mb-1">
+                      <h4 className="font-bold text-base text-slate-800 dark:text-white line-clamp-1 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors mb-1 uppercase">
                         <Link to={`/kh/product/${prodId || ""}`}>
                           {prod.product_name}
                         </Link>
@@ -263,7 +281,7 @@ export default function Favourite() {
                         disabled={!isAvailable || cartLoading[prodId]}
                         className={`w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-sm transition-all duration-150 flex items-center justify-center gap-2 ${
                           isAvailable
-                            ? "bg-blue-500 hover:bg-blue-600 text-white hover:shadowactive:scale-[0.99]"
+                            ? "bg-blue-500 hover:bg-blue-600 text-white hover:shadow active:scale-[0.99]"
                             : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed"
                         }`}
                       >
@@ -285,6 +303,46 @@ export default function Favourite() {
           </div>
         )}
       </div>
+
+      {statusModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-2xl mb-4">
+              {statusModal.type === "success" && (
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 rounded-2xl">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              {statusModal.type === "error" && (
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/40 text-rose-500 rounded-2xl">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              )}
+              {statusModal.type === "info" && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/40 text-blue-500 rounded-2xl">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+
+            <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">{statusModal.title}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">{statusModal.message}</p>
+
+            <button
+              onClick={closeStatusModal}
+              className="mt-6 w-full py-2.5 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -95,7 +95,7 @@ export default function RegisterPage() {
         },
       )
       .then((rsp) => {
-        alert("Register Successful");
+        // alert("Register Successful");
         navigate("/verify-code", { state: { email: userData.email } });
       })
       .catch((error) => {

@@ -15,6 +15,21 @@ export default function Product() {
   const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState(null);
 
+  const [statusModal, setStatusModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
+
+  const showStatus = (title, message, type = "success") => {
+    setStatusModal({ isOpen: true, title, message, type });
+  };
+
+  const closeStatusModal = () => {
+    setStatusModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -79,7 +94,7 @@ export default function Product() {
   const handleToggleFavorite = async (productId) => {
     const token = localStorage.getItem("authToken");
     if (!token) {
-      alert("Please login first to manage your favorites.");
+      showStatus("Authentication Required", "Please log in first to manage your favorites.", "info");
       return;
     }
 
@@ -89,9 +104,7 @@ export default function Product() {
 
     try {
       if (isFav) {
-        console.log(
-          `Sending DELETE request for favorite ID: ${existingFav.id} with product_id: ${productId}`
-        );
+        console.log(`Sending DELETE request for favorite ID: ${existingFav.id} with product_id: ${productId}`);
 
         await API.delete(
           `https://pharmacy-system-backend-j77b.onrender.com/api/favourites/${existingFav.id}`,
@@ -120,9 +133,8 @@ export default function Product() {
       }
     } catch (error) {
       console.error("Favorite Toggle Error:", error);
-      alert(
-        error.response?.data?.message || "Failed to update favorite status."
-      );
+      const errMsg = error.response?.data?.message || "Failed to update favorite status.";
+      showStatus("Error", errMsg, "error");
     }
   };
 
@@ -131,8 +143,10 @@ export default function Product() {
 
     const token = localStorage.getItem("authToken");
     if (!token) {
-      alert("Please login first to add items to your cart.");
       setIsModalOpen(false);
+      setTimeout(() => {
+        showStatus("Authentication Required", "Please log in first to add items to your cart.", "info");
+      }, 100);
       return;
     }
 
@@ -146,17 +160,22 @@ export default function Product() {
       await API.post("/cards", payload);
 
       window.dispatchEvent(new Event("cart-updated"));
-
-      alert(
-        `Successfully saved ${quantity}x "${selectedProduct.product_name}" to your cart!`
-      );
       setIsModalOpen(false);
+      
+      setTimeout(() => {
+        showStatus(
+          "Added to Cart", 
+          `Successfully saved ${quantity}x "${selectedProduct.product_name}" to your shopping cart!`, 
+          "success"
+        );
+      }, 100);
     } catch (error) {
       console.error("Cart Error Details:", error);
-      const serverErrorMessage =
-        error.response?.data?.message ||
-        "Failed to save item to cart. Please try again.";
-      alert(serverErrorMessage);
+      const serverErrorMessage = error.response?.data?.message || "Failed to save item to cart. Please try again.";
+      setIsModalOpen(false);
+      setTimeout(() => {
+        showStatus("Cart Error", serverErrorMessage, "error");
+      }, 100);
     } finally {
       setSubmitting(false);
     }
@@ -290,8 +309,8 @@ export default function Product() {
       </div>
 
       {isModalOpen && selectedProduct && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full max-w-lg rounded-3xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-full max-w-lg rounded-3xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto transform transition-all">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
@@ -305,13 +324,7 @@ export default function Product() {
                 onClick={() => setIsModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -371,7 +384,7 @@ export default function Product() {
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="w-11 h-11 bg-slate-100 dark:bg-slate-700 rounded-xl font-extrabold"
+                  className="w-11 h-11 bg-slate-100 dark:bg-slate-700 rounded-xl font-extrabold text-slate-800 dark:text-white"
                 >
                   -
                 </button>
@@ -380,7 +393,7 @@ export default function Product() {
                 </span>
                 <button
                   onClick={() => setQuantity((q) => q + 1)}
-                  className="w-11 h-11 bg-slate-100 dark:bg-slate-700 rounded-xl font-extrabold"
+                  className="w-11 h-11 bg-slate-100 dark:bg-slate-700 rounded-xl font-extrabold text-slate-800 dark:text-white"
                 >
                   +
                 </button>
@@ -422,7 +435,7 @@ export default function Product() {
       )}
 
       {isBrandModalOpen && selectedBrand && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
             <div className="flex justify-between items-start mb-5">
               <div>
@@ -437,13 +450,7 @@ export default function Product() {
                 onClick={() => setIsBrandModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -484,11 +491,56 @@ export default function Product() {
             <div className="flex justify-end">
               <button
                 onClick={() => setIsBrandModalOpen(false)}
-                className="w-full sm:w-auto px-6 py-2.5 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm"
+                className="w-full bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold py-2.5 rounded-xl transition-colors shadow-sm"
               >
                 Close Review
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {statusModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative text-center">
+            
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-2xl mb-4">
+              {statusModal.type === "success" && (
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 rounded-2xl">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              )}
+              {statusModal.type === "error" && (
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/40 text-rose-500 rounded-2xl">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              )}
+              {statusModal.type === "info" && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/40 text-blue-500 rounded-2xl">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+
+            <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight uppercase">
+              {statusModal.title}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+              {statusModal.message}
+            </p>
+
+            <button
+              onClick={closeStatusModal}
+              className="mt-6 w-full py-2.5 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+            >
+              Dismiss
+            </button>
           </div>
         </div>
       )}

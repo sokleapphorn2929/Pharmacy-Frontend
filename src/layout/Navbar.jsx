@@ -42,7 +42,7 @@ export default function Navbar() {
         const rsp = await API.get("/cards");
         const cartItems = rsp.data.data || rsp.data || [];
         
-        console.log("Navbar raw items payload:", cartItems);
+        // console.log("Navbar raw items payload:", cartItems);
 
         const totalQty = cartItems.reduce(
           (acc, item) => acc + (Number(item.qty) || 0),

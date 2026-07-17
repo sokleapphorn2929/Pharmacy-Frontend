@@ -104,7 +104,7 @@ export default function VerifyCode() {
 
         if (finalToken && typeof finalToken === "string") {
           localStorage.setItem("authToken", finalToken);
-          alert("Verification Successful!");
+          // alert("Verification Successful!");
           navigate("/kh/home");
         } else {
           throw new Error(
