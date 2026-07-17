@@ -30,6 +30,38 @@ export default function Cart() {
     setConfirmModal({ isOpen: true, title, message, onConfirm });
   };
 
+  // --- Added Checkout Function ---
+  const handleCheckout = async () => {
+    const orderItems = cartItems.map((item) => {
+      const productInfo = getProductDetails(item.product_id);
+      return {
+        product_id: item.product_id,
+        qty: item.qty,
+        price: parseFloat(productInfo.product_price || 0),
+      };
+    });
+
+    try {
+      showStatus("Processing", "Placing your order, please wait...", "info");
+
+      await API.post("/orders", {
+        order_date: new Date().toISOString().slice(0, 10),
+        order_status: "pending",
+        items: orderItems,
+      });
+
+      // Clear cart items from DB after successful order
+      await Promise.all(cartItems.map((item) => API.delete(`/cards/${item.id}`)));
+
+      setCartItems([]);
+      window.dispatchEvent(new Event("cart-updated"));
+      showStatus("Order Successful", "Your order has been placed successfully.", "success");
+    } catch (error) {
+      console.error("Checkout error:", error);
+      showStatus("Checkout Failed", "Could not complete your order. Please try again.", "error");
+    }
+  };
+
   useEffect(() => {
     async function fetchCartData() {
       try {
@@ -53,12 +85,7 @@ export default function Cart() {
     return products.find((p) => String(p.id) === String(productId)) || {};
   };
 
-  const handleUpdateQuantity = async (
-    cartId,
-    productId,
-    currentQty,
-    amount,
-  ) => {
+  const handleUpdateQuantity = async (cartId, productId, currentQty, amount) => {
     const newQty = currentQty + amount;
     if (newQty < 1) return;
 
@@ -70,8 +97,8 @@ export default function Cart() {
 
       setCartItems((prevItems) =>
         prevItems.map((item) =>
-          item.id === cartId ? { ...item, qty: newQty } : item,
-        ),
+          item.id === cartId ? { ...item, qty: newQty } : item
+        )
       );
 
       window.dispatchEvent(new Event("cart-updated"));
@@ -89,7 +116,7 @@ export default function Cart() {
       await API.delete(`/cards/${cartId}`);
 
       setCartItems((prevItems) =>
-        prevItems.filter((item) => item.id !== cartId),
+        prevItems.filter((item) => item.id !== cartId)
       );
 
       window.dispatchEvent(new Event("cart-updated"));
@@ -110,7 +137,7 @@ export default function Cart() {
 
   const totalItems = cartItems.reduce(
     (acc, item) => acc + parseInt(item.qty || 0),
-    0,
+    0
   );
 
   const subtotal = cartItems.reduce((acc, item) => {
@@ -264,7 +291,7 @@ export default function Cart() {
               </div>
 
               <button
-                onClick={() => showStatus("Checkout Proceeding", "Redirecting you to the secure checkout terminal overview framework...", "info")}
+                onClick={handleCheckout}
                 className="w-full py-3.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-xl shadow-md transition-all duration-150 uppercase tracking-wide flex items-center justify-center gap-2"
               >
                 Secure Checkout &rarr;

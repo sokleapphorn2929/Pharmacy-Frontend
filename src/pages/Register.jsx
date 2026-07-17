@@ -15,6 +15,21 @@ export default function RegisterPage() {
     profile_pic: null,
   });
 
+  // --- Added Modal State ---
+  const [statusModal, setStatusModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
+
+  const showStatus = (title, message) => {
+    setStatusModal({ isOpen: true, title, message });
+  };
+
+  const closeStatusModal = () => {
+    setStatusModal((prev) => ({ ...prev, isOpen: false }));
+  };
+
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return (
       localStorage.getItem("theme") === "dark" ||
@@ -95,7 +110,6 @@ export default function RegisterPage() {
         },
       )
       .then((rsp) => {
-        // alert("Register Successful");
         navigate("/verify-code", { state: { email: userData.email } });
       })
       .catch((error) => {
@@ -107,7 +121,11 @@ export default function RegisterPage() {
           error.response?.data ||
           error.message;
 
-        alert(typeof serverErrorMessage === "object" ? JSON.stringify(serverErrorMessage) : serverErrorMessage);
+        // --- Replaced alert with modal call ---
+        showStatus(
+          "Registration Failed",
+          typeof serverErrorMessage === "object" ? JSON.stringify(serverErrorMessage) : serverErrorMessage
+        );
       })
       .finally(() => {
         setIsLoading(false);
@@ -310,6 +328,22 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      {/* --- Added Modal Implementation --- */}
+      {statusModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700/80 w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">{statusModal.title}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">{statusModal.message}</p>
+            <button
+              onClick={closeStatusModal}
+              className="w-full py-2.5 bg-slate-900 dark:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -9,6 +9,21 @@ export default function Login() {
     email: "",
     password: "",
   });
+
+  const [statusModal, setStatusModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "error",
+  });
+
+  const showStatus = (title, message) => {
+    setStatusModal({ isOpen: true, title, message, type: "error" });
+  };
+
+  const closeStatusModal = () => {
+    setStatusModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return (
@@ -26,7 +41,7 @@ export default function Login() {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
     }
-    
+
     window.dispatchEvent(new Event("theme-changed"));
   }, [isDarkMode]);
 
@@ -48,10 +63,7 @@ export default function Login() {
         userData,
       )
       .then((rsp) => {
-        // alert("Login Successful!");
         const token = rsp.data.token || rsp.data.data?.token;
-
-        console.log("Token received at login step:", token); 
 
         if (token) {
           localStorage.setItem("authToken", token);
@@ -67,7 +79,12 @@ export default function Login() {
           error.response?.data ||
           error.message;
 
-        alert(typeof serverErrorMessage === "object" ? JSON.stringify(serverErrorMessage) : serverErrorMessage);
+        showStatus(
+          "Login Failed",
+          typeof serverErrorMessage === "object"
+            ? JSON.stringify(serverErrorMessage)
+            : serverErrorMessage,
+        );
       })
       .finally(() => {
         setIsLoading(false);
@@ -77,7 +94,6 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-10 font-sans bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700/60 rounded-3xl shadow-xl overflow-hidden max-w-5xl w-full flex flex-col lg:flex-row p-4 lg:p-6 gap-6 lg:gap-12 min-h-150 justify-center transition-colors duration-300 relative">
-        
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
           type="button"
@@ -85,12 +101,32 @@ export default function Login() {
           aria-label="Toggle Theme"
         >
           {isDarkMode ? (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"
+              />
             </svg>
           ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+              />
             </svg>
           )}
         </button>
@@ -144,12 +180,12 @@ export default function Login() {
                   required
                 />
                 <div className="text-right">
-                  <a
-                    href="#forgot"
+                  <Link
+                    to="/forget-password"
                     className="text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 underline transition-colors"
                   >
                     forgot password?
-                  </a>
+                  </Link>
                 </div>
               </div>
 
@@ -194,6 +230,25 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {statusModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">
+              {statusModal.title}
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              {statusModal.message}
+            </p>
+            <button
+              onClick={closeStatusModal}
+              className="w-full py-2.5 bg-slate-900 dark:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
