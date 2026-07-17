@@ -7,6 +7,8 @@ export default function Cart() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState("qr");
 
   const [statusModal, setStatusModal] = useState({
     isOpen: false,
@@ -30,7 +32,7 @@ export default function Cart() {
     setConfirmModal({ isOpen: true, title, message, onConfirm });
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (method) => {
     const orderItems = cartItems.map((item) => {
       const productInfo = getProductDetails(item.product_id);
       return {
@@ -53,16 +55,17 @@ export default function Cart() {
         items: orderItems,
       });
 
-      const orderId = orderResponse.data.data?._id || orderResponse.data.data?.id;
+      const orderId =
+        orderResponse.data.data?._id || orderResponse.data.data?.id;
 
       if (!orderId) throw new Error("Order ID not returned");
 
       await API.post("/payments", {
         order_id: orderId,
         total_price: grandTotal,
-        total_discount: 0.0, 
-        tax: 0.0, 
-        payment_method: "qr",
+        total_discount: 0.0,
+        tax: 0.0,
+        payment_method: method,
         payment_status: "unpaid",
       });
 
@@ -375,7 +378,7 @@ export default function Cart() {
               </div>
 
               <button
-                onClick={handleCheckout}
+                onClick={() => setPaymentModalOpen(true)}
                 className="w-full py-3.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-xl shadow-md transition-all duration-150 uppercase tracking-wide flex items-center justify-center gap-2"
               >
                 Secure Checkout &rarr;
@@ -391,6 +394,67 @@ export default function Cart() {
           </div>
         )}
       </div>
+
+      {paymentModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl max-w-sm w-full shadow-2xl">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-4">
+              Choose Payment Method
+            </h3>
+
+            <button
+              onClick={() => setSelectedMethod("qr")}
+              className={`w-full p-4 mb-3 rounded-xl border-2 flex items-center justify-between ${selectedMethod === "qr" ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-slate-200 dark:border-slate-700"}`}
+            >
+              <span className="font-bold">QR Payment</span>
+              {selectedMethod === "qr" && (
+                <span className="text-blue-500">✓</span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setSelectedMethod("cash")}
+              className={`w-full p-4 mb-6 rounded-xl border-2 flex items-center justify-between ${selectedMethod === "cash" ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-slate-200 dark:border-slate-700"}`}
+            >
+              <span className="font-bold">Cash</span>
+              {selectedMethod === "cash" && (
+                <span className="text-blue-500">✓</span>
+              )}
+            </button>
+
+            {selectedMethod === "qr" && (
+              <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl text-center">
+                <img
+                  src="https://res.cloudinary.com/ds1e6ptad/image/upload/v1784331984/photo_2026-07-18_06-44-12_ga1cmx.webp"
+                  alt="QR Code"
+                  className="w-44 h-64 mx-auto"
+                />
+                <p className="text-xs mt-2 text-slate-500">
+                  Scan this code to pay
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setPaymentModalOpen(false)}
+                className="flex-1 py-2.5 font-bold text-sm rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setPaymentModalOpen(false);
+                  handleCheckout(selectedMethod);
+                }}
+                className="flex-1 py-2.5 font-bold text-sm bg-blue-500 text-white rounded-xl"
+              >
+                Confirm & Pay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {statusModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
