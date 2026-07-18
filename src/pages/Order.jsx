@@ -30,16 +30,19 @@ export default function Order() {
   };
 
   const handleDownloadInvoice = async (orderId) => {
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write("<html><body>Loading invoice...</body></html>");
+
     try {
+      // 2. Fetch data
       const invRes = await API.get(`/invoices/by-order/${orderId}`);
       const invoiceId = invRes.data.data._id || invRes.data.data.id;
-
       const res = await API.get(`/invoices/download/${invoiceId}`);
       const invoiceData = res.data.data;
-
       const currentOrder = orders.find((o) => (o._id || o.id) === orderId);
 
-      const printWindow = window.open("", "_blank");
+      // 3. Update the window content with the real invoice
+      printWindow.document.open();
       printWindow.document.write(`
         <html>
           <head>
@@ -115,10 +118,10 @@ export default function Order() {
       `);
       printWindow.document.close();
     } catch (error) {
-      if (error.response && error.response.status === 404) {
+      printWindow.close(); // Close the blank window if it fails
+      if (error.response?.status === 404) {
         alert("An invoice has not been generated for this order yet.");
       } else {
-        console.error("Error details:", error.response || error);
         alert("Failed to download. Check console for details.");
       }
     }

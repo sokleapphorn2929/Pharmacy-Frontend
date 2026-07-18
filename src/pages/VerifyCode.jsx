@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 
 export default function VerifyCode() {
   const navigate = useNavigate();
@@ -178,13 +178,13 @@ export default function VerifyCode() {
         </form>
 
         <div className="mt-8 text-sm flex justify-center items-center gap-6">
-          <button
-            type="button"
+          <Link
+            to="/"
             onClick={() => navigate(-1)}
             className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
             &larr; Back
-          </button>
+          </Link>
           <button
             type="button"
             onClick={() => alert("Code resent!")}
