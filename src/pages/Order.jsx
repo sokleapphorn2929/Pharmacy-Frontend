@@ -29,6 +29,101 @@ export default function Order() {
     }
   };
 
+  const handleDownloadInvoice = async (orderId) => {
+    try {
+      const invRes = await API.get(`/invoices/by-order/${orderId}`);
+      const invoiceId = invRes.data.data._id || invRes.data.data.id;
+
+      const res = await API.get(`/invoices/download/${invoiceId}`);
+      const invoiceData = res.data.data;
+
+      const currentOrder = orders.find((o) => (o._id || o.id) === orderId);
+
+      const printWindow = window.open("", "_blank");
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Invoice_${invoiceData.invoice_number}</title>
+            <style>
+              body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; }
+              .header { border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
+              .header h2 { margin: 0; color: #0f172a; font-size: 28px; font-weight: 900; }
+              .details { display: flex; justify-content: space-between; margin-bottom: 40px; }
+              .details p { margin: 5px 0; font-size: 14px; }
+              table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+              th { background-color: #f8fafc; text-align: left; padding: 12px; font-size: 12px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+              td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+              .total { text-align: right; font-size: 18px; font-weight: bold; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2>KH PHARMACY.</h2>
+              <p style="color: #64748b; margin-top: 5px;">Official Invoice</p>
+            </div>
+            
+            <div class="details">
+              <div>
+                <strong>Invoice Number:</strong> ${invoiceData.invoice_number}<br>
+                <strong>Date:</strong> ${new Date(invoiceData.invoice_create_at).toLocaleDateString()}
+              </div>
+              <div style="text-align: right;">
+                <strong>Order ID:</strong> ${orderId}
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th style="text-align: right;">Price</th>
+                  <th style="text-align: right;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${
+                  currentOrder?.order_items
+                    ?.map(
+                      (item) => `
+                  <tr>
+                    <td>${item.products?.product_name || "Product"}</td>
+                    <td>${item.qty}</td>
+                    <td style="text-align: right;">$${parseFloat(item.price).toFixed(2)}</td>
+                    <td style="text-align: right;">$${(parseFloat(item.price) * parseInt(item.qty)).toFixed(2)}</td>
+                  </tr>
+                `,
+                    )
+                    .join("") || '<tr><td colspan="4">No items found</td></tr>'
+                }
+              </tbody>
+            </table>
+
+            <div class="total">
+              Grand Total: $${currentOrder?.order_items?.reduce((sum, item) => sum + parseFloat(item.price) * parseInt(item.qty), 0).toFixed(2) || "0.00"}
+            </div>
+
+            <script>
+              // Wait for styles to load, then trigger print dialog, then close tab
+              window.onload = function() { 
+                window.print(); 
+                // Optional: window.close(); if you want the tab to auto-close after printing
+              }
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        alert("An invoice has not been generated for this order yet.");
+      } else {
+        console.error("Error details:", error.response || error);
+        alert("Failed to download. Check console for details.");
+      }
+    }
+  };
+
   useEffect(() => {
     async function fetchOrders() {
       try {
@@ -122,6 +217,28 @@ export default function Order() {
                       >
                         {order.order_status || "Pending"}
                       </span>
+
+                      {order.order_status === "completed" && (
+                        <button
+                          onClick={() => handleDownloadInvoice(orderId)}
+                          className="flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase rounded-lg transition-colors"
+                        >
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                            />
+                          </svg>
+                          Invoice PDF
+                        </button>
+                      )}
 
                       <button
                         onClick={() => confirmDelete(orderId)}
