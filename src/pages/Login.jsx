@@ -45,6 +45,13 @@ export default function Login() {
     window.dispatchEvent(new Event("theme-changed"));
   }, [isDarkMode]);
 
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      navigate("/kh/home", { replace: true });
+    }
+  }, [navigate]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUserData((prev) => ({

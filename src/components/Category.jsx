@@ -58,8 +58,7 @@ export default function Category() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 transition-all duration-500">
         {loading
-          ? 
-            Array.from({ length: 4 }).map((_, idx) => (
+          ? Array.from({ length: 4 }).map((_, idx) => (
               <div
                 key={idx}
                 className="animate-pulse bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl p-4 text-center"
@@ -69,24 +68,33 @@ export default function Category() {
                 <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-md w-1/2 mx-auto" />
               </div>
             ))
-          : 
-            displayedCategories.map((item) => (
+          : displayedCategories.map((item) => (
               <div
                 key={item.id}
                 className="group cursor-pointer bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl p-4 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] hover:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300"
               >
-                <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden mb-4 shadow-sm border border-slate-100 dark:border-slate-700 transform group-hover:scale-105 transition-transform duration-300">
-                  <img
-                    src={item.category_pic}
-                    alt={item.category_name}
-                    className="w-full h-full object-cover select-none pointer-events-none"
-                  />
+                <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden mb-4 shadow-sm border border-slate-100 dark:border-slate-700 transform group-hover:scale-105 transition-transform duration-300 flex items-center justify-center bg-slate-100 dark:bg-slate-700">
+                  {item.category_pic ? (
+                    <img
+                      src={item.category_pic}
+                      alt={item.category_name}
+                      className="w-full h-full object-cover select-none pointer-events-none"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                        e.target.parentElement.innerHTML = item.category_name
+                          .charAt(0)
+                          .toUpperCase();
+                      }}
+                    />
+                  ) : (
+                    <span className="text-3xl font-black text-slate-400 dark:text-slate-500">
+                      {item.category_name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
-
                 <h3 className="font-bold text-sm md:text-base text-slate-800 dark:text-slate-200 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
                   {item.category_name}
                 </h3>
-
                 <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-1">
                   {item.products_count !== undefined
                     ? `${item.products_count} ${item.products_count === 1 ? "Product" : "Products"}`

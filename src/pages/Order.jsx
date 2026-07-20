@@ -99,11 +99,21 @@ export default function Order() {
                     )
                     .join("") || '<tr><td colspan="4">No items found</td></tr>'
                 }
+                <tr>
+                  <td colspan="3"><strong>Delivery Fee</strong></td>
+                  <td style="text-align: right;"><strong>$1.00</strong></td>
+                </tr>
               </tbody>
             </table>
 
             <div class="total">
-              Grand Total: $${currentOrder?.order_items?.reduce((sum, item) => sum + parseFloat(item.price) * parseInt(item.qty), 0).toFixed(2) || "0.00"}
+              Grand Total: $${(
+                (currentOrder?.order_items?.reduce(
+                  (sum, item) =>
+                    sum + parseFloat(item.price) * parseInt(item.qty),
+                  0,
+                ) || 0) + 1
+              ).toFixed(2)}
             </div>
 
             <script>
@@ -118,7 +128,7 @@ export default function Order() {
       `);
       printWindow.document.close();
     } catch (error) {
-      printWindow.close(); // Close the blank window if it fails
+      printWindow.close();
       if (error.response?.status === 404) {
         alert("An invoice has not been generated for this order yet.");
       } else {
@@ -295,13 +305,13 @@ export default function Order() {
                     <div className="mt-4 text-right pt-3 border-t border-dashed border-slate-300 dark:border-slate-700">
                       <span className="font-black text-slate-900 dark:text-white text-lg">
                         Total: $
-                        {order.order_items
-                          ?.reduce(
+                        {(
+                          (order.order_items?.reduce(
                             (sum, item) =>
                               sum + parseFloat(item.price) * parseInt(item.qty),
                             0,
-                          )
-                          .toFixed(2)}
+                          ) || 0) + 1
+                        ).toFixed(2)}
                       </span>
                     </div>
                   </div>

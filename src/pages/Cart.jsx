@@ -191,7 +191,7 @@ export default function Cart() {
     return acc + price * parseInt(item.qty || 0);
   }, 0);
 
-  const deliveryFee = subtotal > 0 ? 2.0 : 0.0;
+  const deliveryFee = subtotal > 0 ? 1.0 : 0.0;
   const grandTotal = subtotal + deliveryFee;
 
   if (loading) {
